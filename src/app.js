@@ -181,8 +181,29 @@ function renderQuestion() {
   window.scrollTo({top:0,behavior:"auto"});
 }
 
+function animateAnalysisPercent(from, to) {
+  const output = app.querySelector("[data-analysis-count]");
+  if (!output) return;
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    output.textContent = String(to);
+    return;
+  }
+  const startedAt = performance.now();
+  const duration = 900;
+  const tick = now => {
+    if (!output.isConnected) return;
+    const progress = Math.min(1, (now - startedAt) / duration);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    output.textContent = String(Math.round(from + (to - from) * eased));
+    if (progress < 1) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+
 function renderAnalysis(percent) {
   state.screen = "analysis";
+  const previousPercent = state.analysisPercent;
+  const startPercent = previousPercent < percent ? previousPercent : Math.max(0, percent - 25);
   state.analysisPercent = percent;
   const messages = {
     25:["外に見せる行動パターンを解析中", "成功欲・責任感・社交性の輪郭が見えてきました。"],
@@ -191,13 +212,14 @@ function renderAnalysis(percent) {
     100:["24問の深層解析が完了", "最後に、あなた自身の直感で過去・現在・近未来の3枚を選びます。"]
   }[percent];
   const content = `<section class="app-screen analysis-screen">
-    <div class="analysis-orbit" style="--progress:${percent*3.6}deg"><span>${percent}<small>%</small></span><i></i><i></i><i></i></div>
+    <div class="analysis-orbit" style="--progress:${percent*3.6}deg" aria-label="解析進行 ${percent}%"><span><output data-analysis-count>${startPercent}</output><small>%</small></span><i></i><i></i><i></i></div>
     <p class="section-kicker">CROSS ANALYSIS</p><h1>${messages[0]}</h1><p>${messages[1]}</p>
     <div class="analysis-signals"><span>心理回答</span><b>×</b><span>5つの占術</span><b>=</b><span>表 × 裏</span></div>
     <button class="cta" type="button" data-action="analysis-continue">${percent === 100 ? "タロットを引く" : "解析を続ける"} →</button>
   </section>`;
   app.innerHTML = shell(content, {hideNav:true});
   window.scrollTo({top:0,behavior:"auto"});
+  requestAnimationFrame(() => animateAnalysisPercent(startPercent, percent));
 }
 
 function beginTarot() {
