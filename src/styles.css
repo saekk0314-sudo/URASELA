@@ -123,7 +123,7 @@ h1,h2,h3,p { margin-top:0; }
 .character-portrait { position:relative; display:block; overflow:hidden; aspect-ratio:1; background:#e9e6f6; }
 .character-portrait img { position:absolute; width:400%; max-width:none; height:400%; left:calc(var(--col) * -100%); top:calc(var(--row) * -100%); }
 .tarot-art { position:relative; display:block; overflow:hidden; aspect-ratio:2/3; background:#101333; box-shadow:0 8px 24px rgba(4,5,20,.42); transform-origin:center; }
-.tarot-art img { position:absolute; width:600%; max-width:none; height:200%; left:calc(var(--col) * -100%); top:calc(var(--row) * -100%); }
+.tarot-art img { position:absolute; width:var(--sprite-width); max-width:none; height:var(--sprite-height); left:var(--sprite-left); top:var(--sprite-top); }
 .tarot-art.is-reversed { transform:rotate(180deg); }
 
 .app-screen { width:min(760px,calc(100% - 32px)); min-height:calc(100vh - 72px); margin:0 auto; padding:54px 0 100px; }
@@ -135,13 +135,18 @@ h1,h2,h3,p { margin-top:0; }
 .privacy-note>span { display:grid; place-items:center; width:40px; height:40px; border-radius:50%; background:#2b2161; }
 .privacy-note p { margin:0; color:#aaa9c1; font-size:11px; }
 .privacy-note b { color:#e7e5f1; font-size:13px; }
-.profile-form { width:min(600px,100%); margin:auto; padding:28px; border:1px solid var(--line); border-radius:22px; background:rgba(16,18,48,.78); }
-.field { display:block; margin:0 0 25px; padding:0; border:0; }
+.profile-form { width:min(600px,100%); min-width:0; margin:auto; padding:28px; border:1px solid var(--line); border-radius:22px; background:rgba(16,18,48,.78); }
+.field { display:block; min-width:0; margin:0 0 25px; padding:0; border:0; }
 .field>span,.field legend { display:block; margin-bottom:9px; color:#e5e3f1; font-size:13px; font-weight:600; }
 .field em { padding:2px 6px; border-radius:5px; background:#533886; color:#ddd1ff; font-size:9px; font-style:normal; }
 .field small { color:#8888a0; font-weight:400; }
-.field input[type="date"],.field input[type="time"],.field input[type="text"],.field input:not([type]),.field select,.compat-form select { width:100%; min-height:52px; padding:12px 14px; border:1px solid rgba(176,173,218,.25); border-radius:10px; outline:0; background:#0c0e2a; color:#fff; }
+.field input[type="date"],.field input[type="time"],.field input[type="text"],.field input:not([type]),.field select,.compat-form select { display:block; width:100%; min-width:0; max-width:100%; min-height:52px; inline-size:100%; min-inline-size:0; max-inline-size:100%; padding:12px 14px; border:1px solid rgba(176,173,218,.25); border-radius:10px; outline:0; background:#0c0e2a; color:#fff; }
+.field>.native-input-shell { display:block; width:100%; min-width:0; max-width:100%; margin:0; overflow:hidden; border:1px solid rgba(176,173,218,.25); border-radius:10px; background:#0c0e2a; }
+.native-input-shell input[type="date"],.native-input-shell input[type="time"] { width:100%; min-width:0; max-width:100%; border:0; border-radius:0; background:transparent; -webkit-appearance:none; appearance:none; }
+.field input[type="date"]::-webkit-date-and-time-value,.field input[type="time"]::-webkit-date-and-time-value { text-align:left; }
 .field input:focus,.field select:focus,.compat-form select:focus { border-color:#8475ef; box-shadow:0 0 0 3px rgba(119,92,255,.15); }
+.native-input-shell:focus-within { border-color:#8475ef; box-shadow:0 0 0 3px rgba(119,92,255,.15); }
+.native-input-shell input:focus { box-shadow:none; }
 .choice-chips { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
 .choice-chips--two { grid-template-columns:repeat(2,1fr); }
 .choice-chips--three { grid-template-columns:repeat(3,1fr); }
@@ -171,12 +176,15 @@ h1,h2,h3,p { margin-top:0; }
 .answer i { color:#75758f; font-style:normal; }
 
 .analysis-screen { display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
-.analysis-orbit { position:relative; display:grid; place-items:center; width:230px; height:230px; margin-bottom:35px; border:1px solid rgba(165,142,255,.25); border-radius:50%; background:conic-gradient(from -90deg,#9d51dc var(--progress),rgba(255,255,255,.05) 0); box-shadow:0 0 80px rgba(104,63,197,.22); }
-.analysis-orbit::before { content:""; position:absolute; inset:9px; border-radius:50%; background:radial-gradient(circle,#221552,#090b24 68%); }
-.analysis-orbit span { position:relative; z-index:2; font:500 58px var(--serif); }
-.analysis-orbit small { font-size:18px; }
-.analysis-orbit i { position:absolute; width:9px; height:9px; border-radius:50%; background:#fff; box-shadow:0 0 12px #9e73ff; }
+.analysis-orbit { position:relative; isolation:isolate; display:grid; place-items:center; width:230px; height:230px; margin-bottom:35px; border:1px solid rgba(165,142,255,.25); border-radius:50%; background:rgba(255,255,255,.05); box-shadow:0 0 80px rgba(104,63,197,.22); }
+.analysis-orbit::before { content:""; position:absolute; z-index:1; inset:9px; border-radius:50%; background:radial-gradient(circle,#221552,#090b24 68%); }
+.analysis-orbit::after { content:""; position:absolute; z-index:0; inset:0; border-radius:50%; background:conic-gradient(from -90deg,rgba(224,143,255,.95) 0 16deg,transparent 48deg),conic-gradient(from -90deg,#9d51dc var(--progress),transparent 0); animation:analysis-ring-spin 1.65s linear infinite; }
+.analysis-orbit span { position:relative; z-index:2; display:flex; align-items:baseline; justify-content:center; color:#fff; font:500 58px/1 var(--serif); font-variant-numeric:tabular-nums; }
+.analysis-orbit output { color:inherit; font:inherit; }
+.analysis-orbit small { margin-left:2px; color:#fff; font:500 18px/1 var(--serif); }
+.analysis-orbit i { position:absolute; z-index:3; width:9px; height:9px; border-radius:50%; background:#fff; box-shadow:0 0 12px #9e73ff; }
 .analysis-orbit i:nth-of-type(1){top:5%;left:48%}.analysis-orbit i:nth-of-type(2){right:8%;bottom:25%}.analysis-orbit i:nth-of-type(3){left:12%;bottom:18%}
+@keyframes analysis-ring-spin { to { transform:rotate(1turn); } }
 .analysis-screen h1 { margin:4px 0 12px; font:500 29px var(--serif); }
 .analysis-screen>p:not(.section-kicker) { max-width:530px; color:#aaa9c0; }
 .analysis-signals { display:flex; align-items:center; gap:12px; margin:28px 0; }
@@ -248,8 +256,8 @@ h1,h2,h3,p { margin-top:0; }
 .cross-grid small { color:#837ba5; }
 .cross-grid b { display:block; margin:4px 0 8px; color:#463d80; font:600 18px var(--serif); }
 .cross-grid p { margin:0; color:#68657a; font-size:12px; }
-.fortune-results { display:grid; grid-template-columns:repeat(2,1fr); gap:14px; }
-.fortune-card { padding:22px; border:1px solid #e4e0ef; border-radius:15px; background:linear-gradient(150deg,#fff,#f5f2ff); }
+.fortune-results { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+.fortune-card { min-width:0; padding:22px; border:1px solid #e4e0ef; border-radius:15px; background:linear-gradient(150deg,#fff,#f5f2ff); }
 .fortune-card>header { display:flex; align-items:center; gap:11px; padding-bottom:14px; border-bottom:1px solid #e7e3ef; }
 .fortune-card>header>span { display:grid; place-items:center; width:38px; height:38px; border-radius:50%; background:#292157; color:#fff; font:15px var(--serif); }
 .fortune-card header small { color:#8b85a5; font-size:8px; letter-spacing:.18em; }
@@ -274,12 +282,18 @@ h1,h2,h3,p { margin-top:0; }
 .nine-star { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; margin-top:16px; }
 .nine-star b { font:600 13px var(--serif); }
 .fortune-card--tarot { grid-column:1/-1; }
-.result-tarot { display:grid; grid-template-columns:repeat(3,1fr); gap:13px; margin:18px 0; }
-.result-tarot>div { text-align:center; }
+.result-tarot { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:13px; margin:18px 0; }
+.result-tarot>div { min-width:0; text-align:center; }
 .result-tarot .tarot-art { width:min(170px,100%); margin:0 auto 10px; border:1px solid #a38747; border-radius:7px; }
-.result-tarot small { display:block; color:#847aa7; }
+.result-tarot small { display:block; overflow-wrap:anywhere; color:#847aa7; }
 .result-tarot b { display:block; font:600 17px var(--serif); }
 .result-tarot p { color:#6e6a79; font-size:10px; }
+.result-tarot-readings { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin:16px 0 22px; text-align:left; }
+.result-tarot-readings article { display:grid; grid-template-columns:32px minmax(0,1fr); gap:10px; padding:14px; border:1px solid #e2ddec; border-radius:12px; background:rgba(255,255,255,.74); }
+.result-tarot-readings article>span { display:grid; place-items:center; width:32px; height:32px; border-radius:50%; background:#eee9ff; color:#6753ad; font:600 10px var(--sans); }
+.result-tarot-readings small { display:block; color:#8983a0; font-size:9px; }
+.result-tarot-readings b { display:block; margin:2px 0 4px; color:#292344; font:600 16px var(--serif); }
+.result-tarot-readings p { margin:0; color:#696477; font-size:10px; line-height:1.7; }
 .identity-section>h3 { margin:0 0 10px; color:#423680; font:600 26px var(--serif); }
 .identity-section>p { color:#545064; }
 .identity-section blockquote { margin:20px 0 0; padding:18px 20px; border-left:3px solid #7b64cf; background:#f5f2ff; color:#5e586e; font-size:13px; }
@@ -339,12 +353,12 @@ h1,h2,h3,p { margin-top:0; }
 .people-select select { margin-top:6px; }
 .compat-form>.cta { margin-top:25px; }
 .compat-form>p { margin:12px 0 0; color:#77778d; font-size:10px; text-align:center; }
-.compat-result { margin-top:24px; padding:34px; border:1px solid rgba(232,182,207,.35); border-radius:22px; background:radial-gradient(circle at 50% 33%,rgba(213,80,157,.27),transparent 25%),linear-gradient(145deg,#171333,#171434); text-align:center; }
+.compat-result { min-width:0; margin-top:24px; padding:34px; border:1px solid rgba(232,182,207,.35); border-radius:22px; background:radial-gradient(circle at 50% 33%,rgba(213,80,157,.27),transparent 25%),linear-gradient(145deg,#171333,#171434); text-align:center; }
 .compat-result>h2 { font:500 28px var(--serif); }
-.compat-score { display:grid; place-items:center; width:210px; height:210px; margin:22px auto; border:1px solid rgba(255,184,219,.48); border-radius:50%; background:radial-gradient(circle,rgba(208,66,147,.42),rgba(61,26,93,.28) 55%,transparent 56%); box-shadow:0 0 35px rgba(212,62,149,.28); }
-.compat-score span { margin-bottom:-65px; color:#efc5dc; font-size:11px; }
-.compat-score b { font:500 74px var(--serif); }
-.compat-score small { font-size:20px; }
+.compat-score { display:flex; flex-direction:column; align-items:center; justify-content:center; width:210px; height:210px; margin:22px auto; border:1px solid rgba(255,184,219,.48); border-radius:50%; background:radial-gradient(circle,rgba(208,66,147,.42),rgba(61,26,93,.28) 55%,transparent 56%); box-shadow:0 0 35px rgba(212,62,149,.28); }
+.compat-score span { margin:0 0 8px; color:#efc5dc; font-size:11px; line-height:1; }
+.compat-score b { display:flex; align-items:baseline; justify-content:center; margin:0; color:#fff; font:500 74px/.9 var(--serif); font-variant-numeric:tabular-nums; }
+.compat-score small { margin-left:2px; color:#fff; font:500 20px/1 var(--serif); }
 .compat-bars { display:grid; gap:9px; max-width:550px; margin:0 auto 25px; }
 .compat-bars span { display:grid; grid-template-columns:65px 1fr 40px; align-items:center; gap:8px; font-size:11px; }
 .compat-bars i { height:6px; border-radius:99px; background:linear-gradient(90deg,#d65bb0 var(--value),rgba(255,255,255,.12) var(--value)); }
@@ -369,7 +383,9 @@ h1,h2,h3,p { margin-top:0; }
 }
 
 @media (max-width:640px) {
-  body { padding-bottom:calc(68px + env(safe-area-inset-bottom)); }
+  html { scroll-padding-top:calc(env(safe-area-inset-top) + 12px); scroll-padding-bottom:calc(88px + env(safe-area-inset-bottom)); }
+  body { padding-bottom:calc(88px + env(safe-area-inset-bottom)); }
+  body::before { content:""; position:fixed; z-index:110; top:0; left:0; right:0; height:env(safe-area-inset-top); background:rgba(5,6,20,.94); pointer-events:none; }
   .site-header { height:60px; padding:0 16px; background:rgba(5,6,20,.86); -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px); }
   .brand-star { width:25px; height:25px; font-size:20px; }
   .brand b { font-size:17px; }
@@ -396,11 +412,11 @@ h1,h2,h3,p { margin-top:0; }
   .cta { min-height:51px; padding:12px 24px; font-size:14px; }
   .cta--hero { min-width:0; width:min(345px,100%); font-size:18px; }
   .hero__content>small { font-size:9px; }
-  .hero__label { bottom:150px; width:128px; padding:10px 12px; }
-  .hero__label b { font-size:13px; }
-  .hero__label span { font-size:8px; }
-  .hero__label--surface { left:0; }
-  .hero__label--inner { right:0; }
+  .hero__label { top:68px; bottom:auto; width:122px; padding:6px 9px; border-radius:999px; background:rgba(9,8,31,.76); }
+  .hero__label b { font-size:12px; line-height:1.25; }
+  .hero__label span { margin-top:2px; font-size:7px; line-height:1.25; }
+  .hero__label--surface { left:10px; }
+  .hero__label--inner { right:10px; }
   .section { width:calc(100% - 24px); padding:55px 0; }
   .section>h2,.final-cta h2 { margin-bottom:24px; font-size:25px; }
   .method-grid { grid-template-columns:repeat(2,1fr); gap:9px; }
@@ -433,7 +449,7 @@ h1,h2,h3,p { margin-top:0; }
   .footer nav { margin:30px 0; grid-template-columns:repeat(2,1fr); }
   .footer nav button { font-size:11px; }
   .last-result-pill { right:12px; bottom:calc(72px + env(safe-area-inset-bottom)); font-size:10px; }
-  .app-screen { width:calc(100% - 24px); min-height:calc(100vh - 60px); padding:35px 0 80px; }
+  .app-screen { width:calc(100% - 24px); min-height:calc(100vh - 60px); min-height:calc(100svh - 60px); padding:35px 0 80px; }
   .screen-heading { margin-bottom:24px; }
   .screen-heading h1 { font-size:29px; }
   .profile-form { padding:20px 16px; }
@@ -452,7 +468,8 @@ h1,h2,h3,p { margin-top:0; }
   .tarot-back { border-radius:8px; }
   .tarot-back::before { inset:10px; }
   .tarot-back small { bottom:18px; font-size:8px; }
-  .tarot-reveal { grid-template-columns:120px 1fr; gap:16px; padding:15px; }
+  .tarot-reveal { grid-template-columns:120px minmax(0,1fr); align-items:start; gap:16px; padding:15px; }
+  .tarot-reveal>div { min-width:0; }
   .tarot-reveal h2 { font-size:23px; }
   .tarot-reveal>div>p { font-size:10px; }
   .result-hero { padding:42px 9px 55px; }
@@ -492,9 +509,16 @@ h1,h2,h3,p { margin-top:0; }
   .planet-grid { grid-template-columns:repeat(5,1fr); gap:2px; }
   .planet-grid b { font-size:9px; }
   .nine-star b { font-size:10px; }
-  .result-tarot { gap:6px; }
-  .result-tarot b { font-size:12px; }
-  .result-tarot p { font-size:8px; }
+  .fortune-card--tarot .result-tarot { grid-template-columns:repeat(3,minmax(0,1fr)); gap:7px; }
+  .fortune-card--tarot .result-tarot>div { display:block; padding:0; border:0; background:none; text-align:center; }
+  .fortune-card--tarot .result-tarot .tarot-art { width:100%; margin:0 auto 7px; }
+  .fortune-card--tarot .result-tarot small { font-size:8px; line-height:1.45; }
+  .fortune-card--tarot .result-tarot b { margin-top:2px; font-size:13px; }
+  .result-tarot-readings { grid-template-columns:1fr; gap:8px; margin-top:14px; }
+  .result-tarot-readings article { grid-template-columns:28px minmax(0,1fr); gap:9px; padding:11px 12px; }
+  .result-tarot-readings article>span { width:28px; height:28px; font-size:9px; }
+  .result-tarot-readings b { font-size:15px; }
+  .result-tarot-readings p { font-size:10px; }
   .identity-section>h3 { font-size:20px; }
   .life-grid article { padding:18px 14px 18px 53px; }
   .life-grid article>span { left:14px; top:17px; }
@@ -521,7 +545,7 @@ h1,h2,h3,p { margin-top:0; }
   .people-select>div { padding:12px 8px; }
   .people-select h2 { font-size:18px; }
   .compat-form select { padding:8px 4px; font-size:10px; }
-  .compat-result { padding:24px 13px; }
+  .compat-result { scroll-margin-top:calc(env(safe-area-inset-top) + 12px); padding:24px 13px; }
   .compat-result>h2 { font-size:22px; }
   .compat-score { width:170px; height:170px; }
   .compat-score b { font-size:61px; }

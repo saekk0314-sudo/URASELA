@@ -70,7 +70,31 @@ function tarotArt(card, className="") {
   const sheet = card.id < 11 ? "a" : "b";
   const col = localId % 6;
   const row = Math.floor(localId / 6);
-  return `<span class="tarot-art ${className} ${card.reversed ? "is-reversed" : ""}" style="--col:${col};--row:${row}" role="img" aria-label="${escapeHtml(card.name)} ${card.reversed ? "逆位置" : "正位置"}">
+  // The generated sheets do not use equal-width cells. Cropping them as a
+  // regular 6 x 2 grid exposes a strip of the neighbouring card on iOS.
+  // These frames follow the actual outer gold borders in each sheet.
+  const frames = sheet === "a"
+    ? {
+        x: [15, 309, 603, 898, 1192, 1487],
+        width: [275, 275, 275, 275, 275, 275],
+        y: [15, 454],
+        height: [418, 417]
+      }
+    : {
+        x: [14, 344, 649, 934, 1217, 1503],
+        width: [313, 288, 270, 267, 270, 258],
+        y: [11, 443],
+        height: [416, 427]
+      };
+  const cropWidth = frames.width[col];
+  const cropHeight = frames.height[row];
+  const spriteStyle = [
+    `--sprite-width:${(1774 / cropWidth) * 100}%`,
+    `--sprite-height:${(887 / cropHeight) * 100}%`,
+    `--sprite-left:${-(frames.x[col] / cropWidth) * 100}%`,
+    `--sprite-top:${-(frames.y[row] / cropHeight) * 100}%`
+  ].join(";");
+  return `<span class="tarot-art ${className} ${card.reversed ? "is-reversed" : ""}" style="${spriteStyle}" role="img" aria-label="${escapeHtml(card.name)} ${card.reversed ? "逆位置" : "正位置"}">
     <img src="assets/generated/tarot-sheet-${sheet}.webp" alt="" width="1774" height="887">
   </span>`;
 }
@@ -144,7 +168,7 @@ function renderProfileForm() {
     <div class="screen-heading"><span>01 / 04</span><p>まずは、生まれ持ったあなたを教えてください</p><h1>基本情報</h1></div>
     <div class="privacy-note"><span>♢</span><p><b>入力情報は端末内だけで計算</b><br>登録・外部送信はありません。</p></div>
     <form id="profile-form" class="profile-form">
-      <label class="field"><span>生年月日 <em>必須</em></span><input required type="date" name="birthdate" min="1900-01-01" max="${today}" value="${escapeHtml(profile.birthdate)}"></label>
+      <label class="field"><span>生年月日 <em>必須</em></span><span class="native-input-shell"><input required type="date" name="birthdate" min="1900-01-01" max="${today}" value="${escapeHtml(profile.birthdate)}"></span></label>
       <fieldset class="field"><legend>性別</legend><div class="choice-chips">${["男性","女性","その他","回答しない"].map(value => `<label><input type="radio" name="gender" value="${value}" ${profile.gender === value ? "checked" : ""}><span>${value}</span></label>`).join("")}</div></fieldset>
       <label class="field"><span>出生地 <em>必須</em></span><select required name="birthplace">${PREFECTURES.map(value => `<option ${profile.birthplace === value ? "selected" : ""}>${value}</option>`).join("")}</select></label>
       <label class="field country-field ${profile.birthplace === "海外" ? "" : "is-hidden"}"><span>国・地域 <em>必須</em></span><input name="country" autocomplete="country-name" placeholder="例：韓国、USA、フランス" ${profile.birthplace === "海外" ? "required" : ""} value="${escapeHtml(profile.country)}"></label>
@@ -153,7 +177,7 @@ function renderProfileForm() {
         <label><input type="radio" name="birthTimeKnown" value="yes" ${profile.birthTimeKnown ? "checked" : ""}><span>分かる</span></label>
         <label><input type="radio" name="birthTimeKnown" value="no" ${!profile.birthTimeKnown ? "checked" : ""}><span>分からない</span></label>
       </div><p class="field-help">分からなくても時柱以外は正常に計算し、最後まで診断できます。</p></fieldset>
-      <label class="field time-field ${profile.birthTimeKnown ? "" : "is-hidden"}"><span>生まれた時刻</span><input type="time" name="birthtime" value="${escapeHtml(profile.birthtime)}"></label>
+      <label class="field time-field ${profile.birthTimeKnown ? "" : "is-hidden"}"><span>生まれた時刻</span><span class="native-input-shell"><input type="time" name="birthtime" value="${escapeHtml(profile.birthtime)}"></span></label>
       <button class="cta cta--full" type="submit">24の深層質問へ進む <span>→</span></button>
       <button class="sub-button" type="button" data-action="home">TOPへ戻る</button>
     </form>
@@ -181,8 +205,29 @@ function renderQuestion() {
   window.scrollTo({top:0,behavior:"auto"});
 }
 
+function animateAnalysisPercent(from, to) {
+  const output = app.querySelector("[data-analysis-count]");
+  if (!output) return;
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    output.textContent = String(to);
+    return;
+  }
+  const startedAt = performance.now();
+  const duration = 900;
+  const tick = now => {
+    if (!output.isConnected) return;
+    const progress = Math.min(1, (now - startedAt) / duration);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    output.textContent = String(Math.round(from + (to - from) * eased));
+    if (progress < 1) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+
 function renderAnalysis(percent) {
   state.screen = "analysis";
+  const previousPercent = state.analysisPercent;
+  const startPercent = previousPercent < percent ? previousPercent : Math.max(0, percent - 25);
   state.analysisPercent = percent;
   const messages = {
     25:["外に見せる行動パターンを解析中", "成功欲・責任感・社交性の輪郭が見えてきました。"],
@@ -191,13 +236,14 @@ function renderAnalysis(percent) {
     100:["24問の深層解析が完了", "最後に、あなた自身の直感で過去・現在・近未来の3枚を選びます。"]
   }[percent];
   const content = `<section class="app-screen analysis-screen">
-    <div class="analysis-orbit" style="--progress:${percent*3.6}deg"><span>${percent}<small>%</small></span><i></i><i></i><i></i></div>
+    <div class="analysis-orbit" style="--progress:${percent*3.6}deg" aria-label="解析進行 ${percent}%"><span><output data-analysis-count>${startPercent}</output><small>%</small></span><i></i><i></i><i></i></div>
     <p class="section-kicker">CROSS ANALYSIS</p><h1>${messages[0]}</h1><p>${messages[1]}</p>
     <div class="analysis-signals"><span>心理回答</span><b>×</b><span>5つの占術</span><b>=</b><span>表 × 裏</span></div>
     <button class="cta" type="button" data-action="analysis-continue">${percent === 100 ? "タロットを引く" : "解析を続ける"} →</button>
   </section>`;
   app.innerHTML = shell(content, {hideNav:true});
   window.scrollTo({top:0,behavior:"auto"});
+  requestAnimationFrame(() => animateAnalysisPercent(startPercent, percent));
 }
 
 function beginTarot() {
@@ -266,13 +312,15 @@ function fortuneSection(result) {
   const {shichu,astrology,numerology,kyusei}=result.fortunes;
   const planets=Object.values(astrology.planets);
   const positions=["過去","現在","近未来"];
+  const tarotSpread=result.tarotSelections.map((card,index)=>`<div>${tarotArt(card)}<small>${positions[index]}・${card.reversed ? "逆位置" : "正位置"}</small><b>${card.name}</b></div>`).join("");
+  const tarotReadings=result.tarotSelections.map((card,index)=>`<article><span>0${index+1}</span><div><small>${positions[index]}・${card.reversed ? "逆位置" : "正位置"}</small><b>${card.name}</b><p>${tarotMessage(card,positions[index]).message}</p></div></article>`).join("");
   return `<section class="result-section fortunes-section"><div class="result-section__title"><span>✦</span><div><small>5 DIVINATIONS</small><h2>5つの占術結果</h2></div></div>
     <div class="fortune-results">
       <article class="fortune-card"><header><span>☯</span><div><small>FOUR PILLARS</small><h3>四柱推命</h3></div></header><div class="pillars">${Object.entries(shichu.pillars).map(([key,value])=>`<span><small>${{year:"年柱",month:"月柱",day:"日柱",hour:"時柱"}[key]}</small><b>${value}</b></span>`).join("")}</div><div class="element-bars">${Object.entries(shichu.elements).map(([key,value])=>`<span style="--value:${Math.min(100,value/3.4*100)}%"><b>${key}</b><i></i></span>`).join("")}</div><h4>日主 ${shichu.dayMaster}・${shichu.dayElement}の人</h4><p>${shichu.summary}</p><small class="precision">${shichu.precision}</small></article>
       <article class="fortune-card"><header><span>☾</span><div><small>ASTROLOGY</small><h3>西洋占星術</h3></div></header><div class="planet-grid">${planets.map(p=>`<span><small>${p.label}<i>${p.role}</i></small><b>${p.sign}</b><em>${p.degree}°</em></span>`).join("")}</div><h4>${astrology.dominant}のエレメントが優勢</h4><p>${astrology.summary}</p><small class="precision">${astrology.precision}</small></article>
       <article class="fortune-card"><header><span>37</span><div><small>NUMEROLOGY</small><h3>数秘術</h3></div></header><div class="number-grid"><span><small>運命数</small><b>${numerology.lifePath}</b></span><span><small>誕生日数</small><b>${numerology.birthday}</b></span><span><small>${numerology.targetYear} 個人年</small><b>${numerology.personalYear}</b></span></div><h4>${numerology.theme}</h4><p>${numerology.summary}</p></article>
       <article class="fortune-card"><header><span>✦</span><div><small>NINE STAR KI</small><h3>九星気学</h3></div></header><div class="nine-star"><span><small>本命星</small><b>${kyusei.main.name}</b></span><span><small>月命星</small><b>${kyusei.monthStar.name}</b></span><span><small>${kyusei.targetYear}年運</small><b>${kyusei.flow.label}</b></span></div><p>${kyusei.summary}</p><small class="precision">${kyusei.flowSummary}</small></article>
-      <article class="fortune-card fortune-card--tarot"><header><span>◇</span><div><small>TAROT</small><h3>タロット</h3></div></header><div class="result-tarot">${result.tarotSelections.map((card,index)=>`<div>${tarotArt(card)}<small>${positions[index]}・${card.reversed ? "逆位置" : "正位置"}</small><b>${card.name}</b><p>${tarotMessage(card,positions[index]).message}</p></div>`).join("")}</div><h4>3枚の総合メッセージ</h4><p>${combinedTarotReading(result.tarotSelections)}</p></article>
+      <article class="fortune-card fortune-card--tarot"><header><span>◇</span><div><small>TAROT</small><h3>タロット</h3></div></header><div class="result-tarot">${tarotSpread}</div><div class="result-tarot-readings">${tarotReadings}</div><h4>3枚の総合メッセージ</h4><p>${combinedTarotReading(result.tarotSelections)}</p></article>
     </div>
   </section>`;
 }
