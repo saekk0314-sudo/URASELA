@@ -176,12 +176,15 @@ h1,h2,h3,p { margin-top:0; }
 .answer i { color:#75758f; font-style:normal; }
 
 .analysis-screen { display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
-.analysis-orbit { position:relative; display:grid; place-items:center; width:230px; height:230px; margin-bottom:35px; border:1px solid rgba(165,142,255,.25); border-radius:50%; background:conic-gradient(from -90deg,#9d51dc var(--progress),rgba(255,255,255,.05) 0); box-shadow:0 0 80px rgba(104,63,197,.22); }
-.analysis-orbit::before { content:""; position:absolute; inset:9px; border-radius:50%; background:radial-gradient(circle,#221552,#090b24 68%); }
+.analysis-orbit { position:relative; isolation:isolate; display:grid; place-items:center; width:230px; height:230px; margin-bottom:35px; border:1px solid rgba(165,142,255,.25); border-radius:50%; background:rgba(255,255,255,.05); box-shadow:0 0 80px rgba(104,63,197,.22); }
+.analysis-orbit::before { content:""; position:absolute; z-index:1; inset:9px; border-radius:50%; background:radial-gradient(circle,#221552,#090b24 68%); }
+.analysis-orbit::after { content:""; position:absolute; z-index:0; inset:0; border-radius:50%; background:conic-gradient(from -90deg,rgba(224,143,255,.95) 0 16deg,transparent 48deg),conic-gradient(from -90deg,#9d51dc var(--progress),transparent 0); animation:analysis-ring-spin 1.65s linear infinite; }
 .analysis-orbit span { position:relative; z-index:2; display:flex; align-items:baseline; justify-content:center; color:#fff; font:500 58px/1 var(--serif); font-variant-numeric:tabular-nums; }
+.analysis-orbit output { color:inherit; font:inherit; }
 .analysis-orbit small { margin-left:2px; color:#fff; font:500 18px/1 var(--serif); }
-.analysis-orbit i { position:absolute; width:9px; height:9px; border-radius:50%; background:#fff; box-shadow:0 0 12px #9e73ff; }
+.analysis-orbit i { position:absolute; z-index:3; width:9px; height:9px; border-radius:50%; background:#fff; box-shadow:0 0 12px #9e73ff; }
 .analysis-orbit i:nth-of-type(1){top:5%;left:48%}.analysis-orbit i:nth-of-type(2){right:8%;bottom:25%}.analysis-orbit i:nth-of-type(3){left:12%;bottom:18%}
+@keyframes analysis-ring-spin { to { transform:rotate(1turn); } }
 .analysis-screen h1 { margin:4px 0 12px; font:500 29px var(--serif); }
 .analysis-screen>p:not(.section-kicker) { max-width:530px; color:#aaa9c0; }
 .analysis-signals { display:flex; align-items:center; gap:12px; margin:28px 0; }
@@ -403,7 +406,7 @@ h1,h2,h3,p { margin-top:0; }
   .cta { min-height:51px; padding:12px 24px; font-size:14px; }
   .cta--hero { min-width:0; width:min(345px,100%); font-size:18px; }
   .hero__content>small { font-size:9px; }
-  .hero__label { bottom:150px; width:128px; padding:10px 12px; }
+  .hero__label { top:148px; bottom:auto; width:118px; padding:9px 10px; }
   .hero__label b { font-size:13px; }
   .hero__label span { font-size:8px; }
   .hero__label--surface { left:0; }
@@ -499,9 +502,13 @@ h1,h2,h3,p { margin-top:0; }
   .planet-grid { grid-template-columns:repeat(5,1fr); gap:2px; }
   .planet-grid b { font-size:9px; }
   .nine-star b { font-size:10px; }
-  .result-tarot { gap:6px; }
-  .result-tarot b { font-size:12px; }
-  .result-tarot p { font-size:8px; }
+  .result-tarot { grid-template-columns:1fr; gap:12px; }
+  .result-tarot>div { display:grid; grid-template-columns:96px minmax(0,1fr); grid-template-rows:auto auto 1fr; column-gap:13px; align-items:start; padding:11px; border:1px solid #e1dcec; border-radius:12px; background:rgba(255,255,255,.72); text-align:left; }
+  .result-tarot .tarot-art { grid-column:1; grid-row:1/4; width:96px; margin:0; }
+  .result-tarot small,.result-tarot b,.result-tarot p { grid-column:2; }
+  .result-tarot small { font-size:10px; }
+  .result-tarot b { font-size:16px; }
+  .result-tarot p { margin:4px 0 0; font-size:10px; line-height:1.65; }
   .identity-section>h3 { font-size:20px; }
   .life-grid article { padding:18px 14px 18px 53px; }
   .life-grid article>span { left:14px; top:17px; }
