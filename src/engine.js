@@ -421,7 +421,7 @@ export function buildCombination(surfaceId, innerId) {
     weaknesses:[...new Set([...surface.weakness.split("・"), ...inner.weakness.split("・")])].slice(0,5),
     caution:`${surface.caution} そして、${inner.caution}`,
     growth:`${surface.growth} さらに、${inner.growth}`,
-    shareCopy:`私のウラセラは【表：${surface.name} × 裏：${inner.name}】${code}｜${title} #URASELA #ウラセラ診断`
+    shareCopy:`私のURASELAは\n「表：${surface.name} × 裏：${inner.name}」でした。\n\n${title}\n表だけじゃ、あなたはわからない。\n\n#URASELA #ウラセラ #性格診断`
   };
 }
 

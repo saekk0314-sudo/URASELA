@@ -3,9 +3,13 @@ import {
   analyzeProfile, calculateCompatibility, combinedTarotReading, decodeSharedResult,
   encodeSharedResult, shuffleTarot, tarotMessage
 } from "./engine.js";
+import { initPrivacyControls, trackEvent, trackScreen, trackShare } from "./analytics.js";
+import { adSlot, hydrateAds } from "./ads.js";
 
 const app = document.querySelector("#app");
 const toast = document.querySelector("#toast");
+const runtimeConfig = window.URASELA_CONFIG || {};
+const siteUrl = String(runtimeConfig.siteUrl || "https://urasela.pages.dev").replace(/\/$/, "");
 const today = new Date().toISOString().slice(0, 10);
 const defaultProfile = {
   birthdate:"", gender:"回答しない", birthplace:"東京都", city:"", country:"", birthTimeKnown:false, birthtime:""
@@ -21,6 +25,59 @@ const state = {
 const escapeHtml = value => String(value ?? "").replace(/[&<>'"]/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[char]));
 const pad = value => String(value).padStart(2, "0");
 const qs = selector => document.querySelector(selector);
+const characterUrl = character => `characters/${character.slug}/`;
+
+function setPageMeta({ title, description, path = "" }) {
+  const url = `${siteUrl}/${String(path).replace(/^\/+|\/+$/g, "")}${path ? "/" : ""}`;
+  document.title = title;
+  document.querySelector('meta[name="description"]')?.setAttribute("content", description);
+  document.querySelector('link[rel="canonical"]')?.setAttribute("href", url);
+  document.querySelector('meta[property="og:title"]')?.setAttribute("content", title);
+  document.querySelector('meta[property="og:description"]')?.setAttribute("content", description);
+  document.querySelector('meta[property="og:url"]')?.setAttribute("content", url);
+  document.querySelector('meta[name="twitter:title"]')?.setAttribute("content", title);
+  document.querySelector('meta[name="twitter:description"]')?.setAttribute("content", description);
+}
+
+function afterRender(screenName) {
+  trackScreen(screenName);
+  requestAnimationFrame(() => {
+    hydrateAds();
+    observeFortuneCards();
+  });
+}
+
+function observeFortuneCards() {
+  const cards = [...document.querySelectorAll("[data-fortune-method]")];
+  if (!cards.length) return;
+  const markReached = card => {
+    if (card.dataset.fortuneTracked === "true") return;
+    card.dataset.fortuneTracked = "true";
+    trackEvent("fortune_reached", { method: card.dataset.fortuneMethod });
+  };
+  if (!("IntersectionObserver" in window)) {
+    cards.forEach(markReached);
+    return;
+  }
+  const observer = new IntersectionObserver(entries => {
+    for (const entry of entries) {
+      if (!entry.isIntersecting) continue;
+      markReached(entry.target);
+      observer.unobserve(entry.target);
+    }
+  }, { threshold: 0.35 });
+  cards.forEach(card => observer.observe(card));
+}
+
+function appRootUrl(path = "") {
+  return new URL(path, document.baseURI);
+}
+
+function updateRoute(path, { replace = false } = {}) {
+  const target = appRootUrl(path);
+  if (target.href === location.href) return;
+  history[replace ? "replaceState" : "pushState"]({}, "", target);
+}
 
 function showToast(message) {
   toast.textContent = message;
@@ -30,9 +87,9 @@ function showToast(message) {
 }
 
 function logo() {
-  return `<button class="brand" type="button" data-action="home" aria-label="URASELA トップへ">
+  return `<a class="brand" href="./" data-action="home" aria-label="URASELA トップへ">
     <span class="brand-star" aria-hidden="true">✦</span><span><b>URASELA</b><small>ウラセラ</small></span>
-  </button>`;
+  </a>`;
 }
 
 function shell(content, { dark=true, hideNav=false } = {}) {
@@ -40,17 +97,17 @@ function shell(content, { dark=true, hideNav=false } = {}) {
   return `<div class="site ${dark ? "site--dark" : "site--light"}">
     <header class="site-header">${logo()}
       <nav class="desktop-nav" aria-label="メインナビゲーション">
-        <button data-action="home">TOP</button><button data-action="characters">キャラ一覧</button>
-        <button data-action="compatibility">相性チェック</button><button data-action="scroll" data-target="flow">診断の流れ</button>
+        <a href="./" data-action="home">TOP</a><a href="characters/" data-action="characters">キャラ一覧</a>
+        <a href="compatibility/" data-action="compatibility">相性チェック</a><button data-action="scroll" data-target="flow">診断の流れ</button>
         <button data-action="scroll" data-target="faq">よくある質問</button>
         <button class="nav-cta" data-action="start">今すぐ無料で診断する</button>
       </nav>
     </header>
     <main id="main">${content}</main>
     ${hideNav ? "" : `<nav class="mobile-nav" aria-label="モバイルナビゲーション">
-      <button data-action="home"><span>✦</span>TOP</button><button data-action="characters"><span>▤</span>キャラ</button>
+      <a href="./" data-action="home"><span>✦</span>TOP</a><a href="characters/" data-action="characters"><span>▤</span>キャラ</a>
       <button class="mobile-nav__main" data-action="start"><span>◇</span>診断</button>
-      <button data-action="compatibility"><span>♡</span>相性</button><button data-action="scroll" data-target="faq"><span>?</span>FAQ</button>
+      <a href="compatibility/" data-action="compatibility"><span>♡</span>相性</a><button data-action="scroll" data-target="faq"><span>?</span>FAQ</button>
     </nav>`}
     ${hasLast && state.screen === "home" ? `<button class="last-result-pill" data-action="last-result">前回の結果を見る</button>` : ""}
   </div>`;
@@ -60,8 +117,9 @@ function characterPortrait(character, className="") {
   const index = character.id - 1;
   const col = index % 4;
   const row = Math.floor(index / 4);
+  const priority = /--result|--detail/.test(className) ? "eager" : "lazy";
   return `<span class="character-portrait ${className}" style="--col:${col};--row:${row}" role="img" aria-label="${escapeHtml(character.name)}のキャラクター">
-    <img src="assets/generated/characters-sheet.webp" alt="" width="1254" height="1254">
+    <img src="assets/generated/characters-sheet.webp" alt="" width="1254" height="1254" loading="${priority}" decoding="async">
   </span>`;
 }
 
@@ -101,11 +159,15 @@ function tarotArt(card, className="") {
 
 function renderHome() {
   state.screen = "home";
+  setPageMeta({
+    title: "URASELA｜表と裏、2人のあなたを読む。",
+    description: "URASELA（ウラセラ）は、5つの占術と24問の深層質問から表キャラと裏キャラを導く、登録不要・完全無料の性格診断・自己分析サービスです。"
+  });
   const sampleA = CHARACTERS[0], sampleB = CHARACTERS[1];
   const methods = FORTUNE_METHODS.map(item => `<article class="method-card"><span>${item.icon}</span><h3>${item.name}</h3><p>${item.lead}</p></article>`).join("");
   const faq = FAQ.map(([question,answer], index) => `<details class="faq-item" ${index === 0 ? "open" : ""}><summary>${question}<span>＋</span></summary><p>${answer}</p></details>`).join("");
   const content = `<section class="hero" aria-labelledby="hero-title">
-      <img class="hero__art" src="assets/generated/hero-urasela.webp" alt="紫の月を背負う表キャラと青い月を背負う裏キャラ" width="2048" height="1152">
+      <img class="hero__art" src="assets/generated/hero-urasela.webp" alt="紫の月を背負う表キャラと青い月を背負う裏キャラ" width="2048" height="1152" fetchpriority="high" decoding="async">
       <div class="hero__shade"></div>
       <div class="hero__content">
         <p class="eyebrow">表だけじゃ、あなたはわからない。</p>
@@ -144,29 +206,31 @@ function renderHome() {
     </section>
     <section class="section characters-teaser" aria-labelledby="teaser-title">
       <p class="section-kicker">16 TYPES</p><h2 id="teaser-title">あなたの中にいる16人</h2>
-      <div class="mini-character-row">${CHARACTERS.slice(0,8).map(character => `<button data-action="character-detail" data-id="${character.id}">${characterPortrait(character)}<b>${character.name}</b></button>`).join("")}</div>
-      <button class="text-link" data-action="characters">16キャラをすべて見る →</button>
+      <div class="mini-character-row">${CHARACTERS.slice(0,8).map(character => `<a href="${characterUrl(character)}" data-action="character-detail" data-id="${character.id}">${characterPortrait(character)}<b>${character.name}</b></a>`).join("")}</div>
+      <a class="text-link" href="characters/" data-action="characters">16キャラをすべて見る →</a>
     </section>
     <section class="section faq" id="faq" aria-labelledby="faq-title">
       <p class="section-kicker">FAQ</p><h2 id="faq-title">よくある質問</h2><div class="faq-list">${faq}</div>
     </section>
     <section class="final-cta"><p>あなたの中には、まだ出会っていないあなたがいる。</p><h2>表と裏、2人のあなたを読もう。</h2><button class="cta" data-action="start">今すぐ無料で診断する →</button></section>
-    <aside id="ad-slot-after-content" class="future-ad-slot" hidden aria-hidden="true"></aside>
+    ${adSlot("homeBottom")}
     ${footer()}`;
   app.innerHTML = shell(content);
   window.scrollTo({top:0,behavior:"auto"});
+  afterRender("home");
 }
 
 function footer() {
-  return `<footer class="footer"><div>${logo()}<p>表のあなたと裏のあなた。<br>まだ知らない自分に出会う占い。</p></div><nav><button data-action="home">TOP</button><button data-action="characters">キャラ一覧</button><button data-action="compatibility">相性チェック</button><button data-action="scroll" data-target="flow">診断の流れ</button><button data-action="scroll" data-target="faq">よくある質問</button></nav><small>© 2026 URASELA. 結果は自己理解を楽しむためのものです。</small></footer>`;
+  return `<footer class="footer"><div>${logo()}<p>表のあなたと裏のあなた。<br>まだ知らない自分に出会う占い。</p></div><nav aria-label="フッターナビゲーション"><a href="./" data-action="home">TOP</a><a href="characters/" data-action="characters">キャラ一覧</a><a href="compatibility/" data-action="compatibility">相性チェック</a><button data-action="scroll" data-target="flow">診断の流れ</button><button data-action="scroll" data-target="faq">よくある質問</button><a href="about/">URASELAについて</a><a href="privacy/">プライバシーポリシー</a><a href="disclaimer/">免責事項</a><a href="contact/">お問い合わせ</a><a href="terms/">利用規約</a></nav><small>© 2026 URASELA. 結果は娯楽・自己理解のための参考情報です。</small></footer>`;
 }
 
 function renderProfileForm() {
   state.screen = "profile";
+  setPageMeta({ title:"無料診断をはじめる｜URASELA", description:"基本情報と24問、5つの占術から表キャラと裏キャラを導くURASELAの無料診断。" });
   const profile = state.profile;
   const content = `<section class="app-screen profile-screen">
     <div class="screen-heading"><span>01 / 04</span><p>まずは、生まれ持ったあなたを教えてください</p><h1>基本情報</h1></div>
-    <div class="privacy-note"><span>♢</span><p><b>入力情報は端末内だけで計算</b><br>登録・外部送信はありません。</p></div>
+    <div class="privacy-note"><span>♢</span><p><b>診断入力は端末内だけで計算</b><br>生年月日・出生地・回答内容は外部送信しません。</p></div>
     <form id="profile-form" class="profile-form">
       <label class="field"><span>生年月日 <em>必須</em></span><span class="native-input-shell"><input required type="date" name="birthdate" min="1900-01-01" max="${today}" value="${escapeHtml(profile.birthdate)}"></span></label>
       <fieldset class="field"><legend>性別</legend><div class="choice-chips">${["男性","女性","その他","回答しない"].map(value => `<label><input type="radio" name="gender" value="${value}" ${profile.gender === value ? "checked" : ""}><span>${value}</span></label>`).join("")}</div></fieldset>
@@ -184,10 +248,12 @@ function renderProfileForm() {
   </section>`;
   app.innerHTML = shell(content, {hideNav:true});
   window.scrollTo({top:0,behavior:"auto"});
+  afterRender("profile");
 }
 
 function renderQuestion() {
   state.screen = "questions";
+  setPageMeta({ title:"24問の深層質問｜URASELA", description:"恋愛・仕事・お金・承認欲求など24問から、表と裏の性格傾向を分析します。" });
   const question = QUESTIONS[state.questionIndex];
   const progress = Math.round((state.questionIndex / QUESTIONS.length) * 100);
   const selected = state.answers[state.questionIndex];
@@ -203,6 +269,7 @@ function renderQuestion() {
   </section>`;
   app.innerHTML = shell(content, {hideNav:true});
   window.scrollTo({top:0,behavior:"auto"});
+  afterRender("questions");
 }
 
 function animateAnalysisPercent(from, to) {
@@ -240,16 +307,21 @@ function renderAnalysis(percent) {
     <p class="section-kicker">CROSS ANALYSIS</p><h1>${messages[0]}</h1><p>${messages[1]}</p>
     <div class="analysis-signals"><span>心理回答</span><b>×</b><span>5つの占術</span><b>=</b><span>表 × 裏</span></div>
     <button class="cta" type="button" data-action="analysis-continue">${percent === 100 ? "タロットを引く" : "解析を続ける"} →</button>
+    ${percent === 100 ? adSlot("postQuestions") : ""}
   </section>`;
   app.innerHTML = shell(content, {hideNav:true});
   window.scrollTo({top:0,behavior:"auto"});
   requestAnimationFrame(() => animateAnalysisPercent(startPercent, percent));
+  trackEvent("analysis_progress", { percent });
+  if (percent === 75) trackEvent("cross_analysis_reached");
+  afterRender("analysis");
 }
 
 function beginTarot() {
   state.tarotDeck = shuffleTarot();
   state.tarotStage = 0; state.tarotCursor = 0; state.tarotSelections = []; state.tarotReveal = null;
   setTarotOffers();
+  trackEvent("tarot_start");
   renderTarot();
 }
 
@@ -276,12 +348,14 @@ function renderTarot() {
   </section>`;
   app.innerHTML = shell(content, {hideNav:true});
   window.scrollTo({top:0,behavior:"auto"});
+  afterRender("tarot");
 }
 
 function finishDiagnosis() {
   try {
     state.result = analyzeProfile(state.profile, state.answers.map(Number), state.tarotSelections);
     localStorage.setItem("urasela:lastResult", JSON.stringify(state.result));
+    trackEvent("divinations_complete");
     renderResult();
   } catch (error) {
     showToast(error.message);
@@ -316,11 +390,12 @@ function fortuneSection(result) {
   const tarotReadings=result.tarotSelections.map((card,index)=>`<article><span>0${index+1}</span><div><small>${positions[index]}・${card.reversed ? "逆位置" : "正位置"}</small><b>${card.name}</b><p>${tarotMessage(card,positions[index]).message}</p></div></article>`).join("");
   return `<section class="result-section fortunes-section"><div class="result-section__title"><span>✦</span><div><small>5 DIVINATIONS</small><h2>5つの占術結果</h2></div></div>
     <div class="fortune-results">
-      <article class="fortune-card"><header><span>☯</span><div><small>FOUR PILLARS</small><h3>四柱推命</h3></div></header><div class="pillars">${Object.entries(shichu.pillars).map(([key,value])=>`<span><small>${{year:"年柱",month:"月柱",day:"日柱",hour:"時柱"}[key]}</small><b>${value}</b></span>`).join("")}</div><div class="element-bars">${Object.entries(shichu.elements).map(([key,value])=>`<span style="--value:${Math.min(100,value/3.4*100)}%"><b>${key}</b><i></i></span>`).join("")}</div><h4>日主 ${shichu.dayMaster}・${shichu.dayElement}の人</h4><p>${shichu.summary}</p><small class="precision">${shichu.precision}</small></article>
-      <article class="fortune-card"><header><span>☾</span><div><small>ASTROLOGY</small><h3>西洋占星術</h3></div></header><div class="planet-grid">${planets.map(p=>`<span><small>${p.label}<i>${p.role}</i></small><b>${p.sign}</b><em>${p.degree}°</em></span>`).join("")}</div><h4>${astrology.dominant}のエレメントが優勢</h4><p>${astrology.summary}</p><small class="precision">${astrology.precision}</small></article>
-      <article class="fortune-card"><header><span>37</span><div><small>NUMEROLOGY</small><h3>数秘術</h3></div></header><div class="number-grid"><span><small>運命数</small><b>${numerology.lifePath}</b></span><span><small>誕生日数</small><b>${numerology.birthday}</b></span><span><small>${numerology.targetYear} 個人年</small><b>${numerology.personalYear}</b></span></div><h4>${numerology.theme}</h4><p>${numerology.summary}</p></article>
-      <article class="fortune-card"><header><span>✦</span><div><small>NINE STAR KI</small><h3>九星気学</h3></div></header><div class="nine-star"><span><small>本命星</small><b>${kyusei.main.name}</b></span><span><small>月命星</small><b>${kyusei.monthStar.name}</b></span><span><small>${kyusei.targetYear}年運</small><b>${kyusei.flow.label}</b></span></div><p>${kyusei.summary}</p><small class="precision">${kyusei.flowSummary}</small></article>
-      <article class="fortune-card fortune-card--tarot"><header><span>◇</span><div><small>TAROT</small><h3>タロット</h3></div></header><div class="result-tarot">${tarotSpread}</div><div class="result-tarot-readings">${tarotReadings}</div><h4>3枚の総合メッセージ</h4><p>${combinedTarotReading(result.tarotSelections)}</p></article>
+      <article class="fortune-card" data-fortune-method="shichu"><header><span>☯</span><div><small>FOUR PILLARS</small><h3>四柱推命</h3></div></header><div class="pillars">${Object.entries(shichu.pillars).map(([key,value])=>`<span><small>${{year:"年柱",month:"月柱",day:"日柱",hour:"時柱"}[key]}</small><b>${value}</b></span>`).join("")}</div><div class="element-bars">${Object.entries(shichu.elements).map(([key,value])=>`<span style="--value:${Math.min(100,value/3.4*100)}%"><b>${key}</b><i></i></span>`).join("")}</div><h4>日主 ${shichu.dayMaster}・${shichu.dayElement}の人</h4><p>${shichu.summary}</p><small class="precision">${shichu.precision}</small></article>
+      <article class="fortune-card" data-fortune-method="astrology"><header><span>☾</span><div><small>ASTROLOGY</small><h3>西洋占星術</h3></div></header><div class="planet-grid">${planets.map(p=>`<span><small>${p.label}<i>${p.role}</i></small><b>${p.sign}</b><em>${p.degree}°</em></span>`).join("")}</div><h4>${astrology.dominant}のエレメントが優勢</h4><p>${astrology.summary}</p><small class="precision">${astrology.precision}</small></article>
+      ${adSlot("divinations")}
+      <article class="fortune-card" data-fortune-method="numerology"><header><span>37</span><div><small>NUMEROLOGY</small><h3>数秘術</h3></div></header><div class="number-grid"><span><small>運命数</small><b>${numerology.lifePath}</b></span><span><small>誕生日数</small><b>${numerology.birthday}</b></span><span><small>${numerology.targetYear} 個人年</small><b>${numerology.personalYear}</b></span></div><h4>${numerology.theme}</h4><p>${numerology.summary}</p></article>
+      <article class="fortune-card" data-fortune-method="kyusei"><header><span>✦</span><div><small>NINE STAR KI</small><h3>九星気学</h3></div></header><div class="nine-star"><span><small>本命星</small><b>${kyusei.main.name}</b></span><span><small>月命星</small><b>${kyusei.monthStar.name}</b></span><span><small>${kyusei.targetYear}年運</small><b>${kyusei.flow.label}</b></span></div><p>${kyusei.summary}</p><small class="precision">${kyusei.flowSummary}</small></article>
+      <article class="fortune-card fortune-card--tarot" data-fortune-method="tarot"><header><span>◇</span><div><small>TAROT</small><h3>タロット</h3></div></header><div class="result-tarot">${tarotSpread}</div><div class="result-tarot-readings">${tarotReadings}</div><h4>3枚の総合メッセージ</h4><p>${combinedTarotReading(result.tarotSelections)}</p></article>
     </div>
   </section>`;
 }
@@ -341,22 +416,31 @@ function renderResult() {
   if (!result) return renderHome();
   const shared=Boolean(result.shared);
   const code=result.combination.code;
+  setPageMeta({
+    title:`${result.surface.name} × ${result.inner.name}｜URASELA診断結果`,
+    description:`表は「${result.surface.name}」、裏は「${result.inner.name}」。${result.combination.title}の強み・恋愛・仕事・人間関係を読み解きます。`
+  });
   const tarotBlock = shared && result.tarotSelections?.length === 3 ? `<section class="result-section shared-tarot"><div class="result-section__title"><span>◇</span><div><small>TAROT</small><h2>共有された3枚</h2></div></div><div class="result-tarot">${result.tarotSelections.map((card,index)=>`<div>${tarotArt(card)}<small>${["過去","現在","近未来"][index]}</small><b>${card.name}</b><p>${card.meaning}</p></div>`).join("")}</div></section>` : "";
   const content=`<section class="result-hero"><div class="result-hero__stars"></div><p class="section-kicker">YOUR URASELA</p><h1>${shared ? "共有されたウラセラ" : "あなたのウラセラ"}</h1><div class="result-code"><span>TYPE ${code.replace("×"," × TYPE ")}</span><b>${result.combination.relation.label}</b></div>${resultPair(result)}<div class="combination-name"><small>2人の組み合わせ名</small><h2>${result.combination.title}</h2><p>${result.combination.identity}</p></div>${resultActions(result)}</section>
-    <div class="result-body">${shared ? "" : crossSection(result)}${shared ? tarotBlock : fortuneSection(result)}${combinationSections(result)}
+    <div class="result-body">${shared ? "" : crossSection(result)}${shared ? tarotBlock : fortuneSection(result)}${combinationSections(result)}${adSlot("resultMiddle")}
       <section class="result-next"><h2>2人の相性も、表と裏でわかる。</h2><p>恋愛・友達・仕事の3つから、惹かれる理由とズレる理由を解析します。</p><button class="cta" data-action="compatibility">相性チェックへ →</button></section>
       <div class="result-bottom-actions">${shared ? `<button class="cta" data-action="start">自分も無料で診断する →</button>` : `<button data-action="reset">もう一度診断する</button>`}<button data-action="characters">16キャラを見る</button></div>
     </div>${footer()}`;
   app.innerHTML=shell(content,{hideNav:false});
   window.scrollTo({top:0,behavior:"auto"});
+  trackEvent(shared ? "shared_result_view" : "result_view", { surface_type:result.surface.id, inner_type:result.inner.id, combination_code:code.replace("×","x") });
+  afterRender("result");
 }
 
 function renderCharacters() {
   state.screen="characters";
+  setPageMeta({ title:"URASELA 16タイプキャラクター一覧｜表キャラ・裏キャラ", description:"URASELAの16タイプを一覧で紹介。各キャラクターの性格、表に出た場合、裏に出た場合、恋愛、仕事を読んで無料診断へ進めます。", path:"characters" });
   const content=`<section class="directory-hero"><p class="section-kicker">16 TYPES</p><h1>あなたの中にいる<br>16人のウラセラたち</h1><p>同じキャラでも、表に出るか裏に出るかで意味は変わります。</p></section>
-    <section class="character-directory"><div class="character-grid">${CHARACTERS.map(character=>`<button class="character-card" data-action="character-detail" data-id="${character.id}">${characterPortrait(character)}<span><small>TYPE ${pad(character.id)}・${character.en}</small><h2>${character.name}</h2><b>${character.catch}</b><p>${character.core}</p><em>詳しく見る →</em></span></button>`).join("")}</div></section>${footer()}`;
+    <section class="character-directory"><div class="character-grid">${CHARACTERS.map(character=>`<a class="character-card" href="${characterUrl(character)}" data-action="character-detail" data-id="${character.id}">${characterPortrait(character)}<span><small>TYPE ${pad(character.id)}・${character.en}</small><h2>${character.name}</h2><b>${character.catch}</b><p>${character.core}</p><em>詳しく見る →</em></span></a>`).join("")}</div></section>${footer()}`;
   app.innerHTML=shell(content);
   window.scrollTo({top:0,behavior:"auto"});
+  trackEvent("characters_view");
+  afterRender("characters");
 }
 
 function renderCharacterDetail(id) {
@@ -364,42 +448,49 @@ function renderCharacterDetail(id) {
   if (!character) return;
   state.selectedCharacter=character;
   state.screen="character-detail";
+  setPageMeta({ title:`${character.name}｜URASELA 16タイプ性格診断`, description:`${character.name}（${character.en}）の基本性格、表に出た時、裏に出た時、恋愛、仕事、強み、弱みを紹介。`, path:characterUrl(character) });
   const sections=[["表に出た時",character.surface],["裏に出た時",character.inner],["恋愛",character.love],["仕事",character.work],["お金",character.money],["強み",character.strength],["弱み",character.weakness],["伸ばし方",character.growth]];
-  const content=`<section class="character-detail"><button class="back-button" data-action="characters">← キャラ一覧</button><div class="character-detail__hero">${characterPortrait(character,"character-portrait--detail")}<div><small>TYPE ${pad(character.id)}</small><h1>${character.name}</h1><em>${character.en}</em><b>${character.catch}</b><div class="tag-row">${character.tags.map(tag=>`<span>#${tag}</span>`).join("")}</div></div></div><div class="character-detail__core"><h2>基本性格</h2><p>${character.core}</p></div><div class="detail-grid">${sections.map(([title,text])=>`<article><h3>${title}</h3><p>${text}</p></article>`).join("")}</div><button class="cta cta--full" data-action="start">自分の表と裏を診断する →</button></section>${footer()}`;
+  const content=`<section class="character-detail"><a class="back-button" href="characters/" data-action="characters">← キャラ一覧</a><div class="character-detail__hero">${characterPortrait(character,"character-portrait--detail")}<div><small>TYPE ${pad(character.id)}</small><h1>${character.name}</h1><em>${character.en}</em><b>${character.catch}</b><div class="tag-row">${character.tags.map(tag=>`<span>#${tag}</span>`).join("")}</div></div></div><div class="character-detail__core"><h2>基本性格</h2><p>${character.core}</p></div><div class="detail-grid">${sections.map(([title,text])=>`<article><h3>${title}</h3><p>${text}</p></article>`).join("")}<article><h3>相性</h3><p>同じタイプでも、表と裏の組み合わせで相性は変わります。恋愛・友達・仕事の3つから2人を解析できます。</p><a class="text-link" href="compatibility/" data-action="compatibility">相性を確認する →</a></article></div><button class="cta cta--full" data-action="start">自分の表と裏を診断する →</button></section>${footer()}`;
   app.innerHTML=shell(content);
   window.scrollTo({top:0,behavior:"auto"});
+  trackEvent("character_detail_view", { character_type:character.id, character_slug:character.slug });
+  afterRender("character_detail");
 }
 
 function typeOptions(selected) { return CHARACTERS.map(character=>`<option value="${character.id}" ${Number(selected)===character.id?"selected":""}>${pad(character.id)} ${character.name}</option>`).join(""); }
 
 function renderCompatibility() {
   state.screen="compatibility";
+  setPageMeta({ title:"無料の恋愛・友達・仕事相性診断｜URASELA", description:"表キャラ×裏キャラ同士で、恋愛・友達・仕事の相性を無料診断。惹かれ合うポイント、ズレるポイント、長続きのコツが分かります。", path:"compatibility" });
   if (state.result) {
     state.compatibilityForm.selfSurface=state.result.surface.id;
     state.compatibilityForm.selfInner=state.result.inner.id;
   }
   const f=state.compatibilityForm, r=state.compatibilityResult;
-  const resultHtml=r?`<section class="compat-result"><p class="section-kicker">${r.modeLabel.toUpperCase()} COMPATIBILITY</p><h2>${r.headline}</h2><div class="compat-score"><span>相性総合</span><b>${r.score}<small>%</small></b></div><div class="compat-bars"><span style="--value:${r.parts.surface}%"><b>表同士</b><i></i><em>${r.parts.surface}%</em></span><span style="--value:${r.parts.inner}%"><b>裏同士</b><i></i><em>${r.parts.inner}%</em></span><span style="--value:${r.parts.cross}%"><b>表×裏</b><i></i><em>${r.parts.cross}%</em></span></div><div class="compat-copy"><article><span>♡</span><h3>惹かれ合うポイント</h3><p>${r.attraction}</p></article><article><span>△</span><h3>ズレるポイント</h3><p>${r.friction}</p></article><article><span>✦</span><h3>長続きさせるコツ</h3><p>${r.advice}</p></article></div><button class="cta cta--full" data-action="share-compat">相性結果を共有 →</button></section>`:"";
+  const resultHtml=r?`<section class="compat-result"><p class="section-kicker">${r.modeLabel.toUpperCase()} COMPATIBILITY</p><h2>${r.headline}</h2><div class="compat-score"><span>相性総合</span><b>${r.score}<small>%</small></b></div><div class="compat-bars"><span style="--value:${r.parts.surface}%"><b>表同士</b><i></i><em>${r.parts.surface}%</em></span><span style="--value:${r.parts.inner}%"><b>裏同士</b><i></i><em>${r.parts.inner}%</em></span><span style="--value:${r.parts.cross}%"><b>表×裏</b><i></i><em>${r.parts.cross}%</em></span></div><div class="compat-copy"><article><span>♡</span><h3>惹かれ合うポイント</h3><p>${r.attraction}</p></article><article><span>△</span><h3>ズレるポイント</h3><p>${r.friction}</p></article><article><span>✦</span><h3>長続きさせるコツ</h3><p>${r.advice}</p></article></div><button class="cta cta--full" data-action="share-compat">相性結果を共有 →</button>${adSlot("compatibilityBottom")}</section>`:"";
   const content=`<section class="compat-hero"><p class="section-kicker">CROSS COMPATIBILITY</p><h1>2人の「表」と「裏」で<br>本当の相性を読む。</h1><p>好きだから合う、似ているから合う、だけでは分からない3つの関係性。</p></section><section class="compat-form-wrap"><form id="compatibility-form" class="compat-form"><fieldset><legend>見たい相性</legend><div class="choice-chips choice-chips--three">${[["love","恋愛"],["friend","友達"],["work","仕事"]].map(([value,label])=>`<label><input type="radio" name="mode" value="${value}" ${f.mode===value?"checked":""}><span>${label}</span></label>`).join("")}</div></fieldset><div class="people-select"><div><h2>あなた</h2><label>表キャラ<select name="selfSurface">${typeOptions(f.selfSurface)}</select></label><label>裏キャラ<select name="selfInner">${typeOptions(f.selfInner)}</select></label></div><span>×</span><div><h2>あの人</h2><label>表キャラ<select name="partnerSurface">${typeOptions(f.partnerSurface)}</select></label><label>裏キャラ<select name="partnerInner">${typeOptions(f.partnerInner)}</select></label></div></div><button class="cta cta--full" type="submit">2人の相性を解析する →</button><p>相手のタイプが分からない時は、キャラ一覧の印象から選んでも楽しめます。</p></form>${resultHtml}</section>${footer()}`;
   app.innerHTML=shell(content);
   window.scrollTo({top:0,behavior:"auto"});
+  afterRender("compatibility");
 }
 
 function startDiagnosis() {
   state.profile={...defaultProfile}; state.answers=Array(24).fill(null); state.questionIndex=0; state.result=null;
   state.tarotSelections=[]; state.compatibilityResult=null;
-  const url=new URL(location.href); url.searchParams.delete("result"); history.replaceState({},"",url);
+  updateRoute("./");
+  trackEvent("diagnosis_start", { source_screen:state.screen });
+  trackEvent("profile_start");
   renderProfileForm();
 }
 
 function scrollHomeTarget(target) {
-  if (state.screen!=="home") renderHome();
+  if (state.screen!=="home") { updateRoute("./"); renderHome(); }
   requestAnimationFrame(()=>document.getElementById(target)?.scrollIntoView({behavior:"smooth",block:"start"}));
 }
 
 function sharedUrl(result=state.result) {
-  const url=new URL(location.href);
-  url.search=""; url.hash=""; url.searchParams.set("result",encodeSharedResult(result));
+  const url=new URL(`${siteUrl}/`);
+  url.searchParams.set("result",encodeSharedResult(result));
   return url.toString();
 }
 
@@ -426,7 +517,7 @@ async function createResultCardBlob(result=state.result) {
   ctx.fillStyle="#f2d39e";ctx.font="25px sans-serif";ctx.fillText(`TYPE ${result.combination.code} / ${result.combination.relation.label}`,540,910);
   ctx.fillStyle="#fff";ctx.font="bold 42px sans-serif";wrapCanvasText(ctx,result.combination.title,540,980,820,54);
   ctx.fillStyle="#d8d7e8";ctx.font="25px sans-serif";wrapCanvasText(ctx,result.combination.identity,540,1070,820,39);
-  ctx.fillStyle="#c9c2f8";ctx.font="24px sans-serif";ctx.fillText("#URASELA  #ウラセラ診断",540,1252);ctx.fillStyle="#fff";ctx.font="28px Georgia,serif";ctx.fillText("表だけじゃ、あなたはわからない。",540,1305);
+  ctx.fillStyle="#c9c2f8";ctx.font="24px sans-serif";ctx.fillText("#URASELA  #ウラセラ  #性格診断",540,1238);ctx.fillStyle="#fff";ctx.font="28px Georgia,serif";ctx.fillText("表だけじゃ、あなたはわからない。",540,1285);ctx.fillStyle="#9fa5d8";ctx.font="21px sans-serif";ctx.fillText(siteUrl.replace(/^https?:\/\//,""),540,1324);
   return new Promise(resolve=>canvas.toBlob(resolve,"image/png",.95));
 }
 
@@ -437,27 +528,31 @@ async function shareResult() {
   const url=sharedUrl(result),text=result.combination.shareCopy;
   try {
     const blob=await createResultCardBlob(result);const file=new File([blob],`URASELA-${result.combination.code.replace("×","x")}.png`,{type:"image/png"});
-    if(navigator.share&&navigator.canShare?.({files:[file]})){await navigator.share({title:"私のウラセラ",text,url,files:[file]});return;}
-    if(navigator.share){await navigator.share({title:"私のウラセラ",text,url});return;}
-    await navigator.clipboard.writeText(`${text}\n${url}`);showToast("結果とURLをコピーしました");
+    if(navigator.share&&navigator.canShare?.({files:[file]})){await navigator.share({title:"私のウラセラ",text,url,files:[file]});trackShare("web_share_file",result);return;}
+    if(navigator.share){await navigator.share({title:"私のウラセラ",text,url});trackShare("web_share",result);return;}
+    await navigator.clipboard.writeText(`${text}\n${url}`);showToast("結果とURLをコピーしました");trackShare("clipboard",result);
   } catch(error){if(error.name!=="AbortError"){await copyResult();}}
 }
 
-async function copyResult() { const text=`${state.result.combination.shareCopy}\n${sharedUrl()}`;try{await navigator.clipboard.writeText(text);showToast("結果とURLをコピーしました");}catch{showToast("コピーできませんでした。共有ボタンをお試しください");} }
-async function downloadCard(){const blob=await createResultCardBlob();const link=document.createElement("a");link.href=URL.createObjectURL(blob);link.download=`URASELA-${state.result.combination.code.replace("×","x")}.png`;link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000);showToast("結果カードを保存しました");}
+async function copyResult() { const text=`${state.result.combination.shareCopy}\n${sharedUrl()}`;try{await navigator.clipboard.writeText(text);showToast("結果とURLをコピーしました");trackShare("clipboard",state.result);}catch{showToast("コピーできませんでした。共有ボタンをお試しください");} }
+async function downloadCard(){const blob=await createResultCardBlob();const link=document.createElement("a");link.href=URL.createObjectURL(blob);link.download=`URASELA-${state.result.combination.code.replace("×","x")}.png`;link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000);showToast("結果カードを保存しました");trackEvent("file_download",{file_name:link.download,content_type:"urasela_result"});}
 
 app.addEventListener("click", async event => {
   const button=event.target.closest("[data-action]");if(!button)return;
+  if (button.matches("a")) event.preventDefault();
   const action=button.dataset.action;
-  if(action==="home")renderHome();
+  if(action==="home"){updateRoute("./");renderHome();}
   else if(action==="start")startDiagnosis();
-  else if(action==="characters")renderCharacters();
-  else if(action==="character-detail")renderCharacterDetail(button.dataset.id);
-  else if(action==="compatibility")renderCompatibility();
+  else if(action==="characters"){updateRoute("characters/");renderCharacters();}
+  else if(action==="character-detail"){
+    const character=CHARACTERS.find(item=>item.id===Number(button.dataset.id));
+    if(character){updateRoute(characterUrl(character));renderCharacterDetail(character.id);}
+  }
+  else if(action==="compatibility"){updateRoute("compatibility/");renderCompatibility();}
   else if(action==="scroll")scrollHomeTarget(button.dataset.target);
   else if(action==="answer"){
     const selected=Number(button.dataset.index);state.answers[state.questionIndex]=selected;const answered=state.questionIndex+1;
-    if([6,12,18].includes(answered))renderAnalysis(answered/24*100);else if(answered===24)renderAnalysis(100);else{state.questionIndex+=1;renderQuestion();}
+    if([6,12,18].includes(answered))renderAnalysis(answered/24*100);else if(answered===24){trackEvent("questions_complete");renderAnalysis(100);}else{state.questionIndex+=1;renderQuestion();}
   }
   else if(action==="question-back"){
     if(state.questionIndex===0)renderProfileForm();else{state.questionIndex-=1;renderQuestion();}
@@ -465,23 +560,36 @@ app.addEventListener("click", async event => {
   else if(action==="analysis-continue"){
     if(state.analysisPercent===100)beginTarot();else{state.questionIndex=state.answers.filter(value=>value!==null).length;renderQuestion();}
   }
-  else if(action==="tarot-pick"){state.tarotReveal=state.tarotOffers[Number(button.dataset.index)];renderTarot();}
+  else if(action==="tarot-pick"){
+    state.tarotReveal=state.tarotOffers[Number(button.dataset.index)];
+    trackEvent("tarot_card_selected", { stage:state.tarotStage+1 });
+    renderTarot();
+  }
   else if(action==="tarot-next"){
     const position=["過去","現在","近未来"][state.tarotStage];state.tarotSelections.push({...state.tarotReveal,position});state.tarotStage+=1;state.tarotCursor+=3;state.tarotReveal=null;
-    if(state.tarotStage>=3)finishDiagnosis();else{setTarotOffers();renderTarot();}
+    if(state.tarotStage>=3){trackEvent("tarot_complete");finishDiagnosis();}else{setTarotOffers();renderTarot();}
   }
   else if(action==="reset")startDiagnosis();
   else if(action==="share")await shareResult();
   else if(action==="copy")await copyResult();
   else if(action==="download")await downloadCard();
-  else if(action==="share-x")window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(state.result.combination.shareCopy)}&url=${encodeURIComponent(sharedUrl())}`,"_blank","noopener,noreferrer");
-  else if(action==="share-line")window.open(`https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(sharedUrl())}`,"_blank","noopener,noreferrer");
+  else if(action==="share-x"){
+    trackShare("x",state.result);
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(state.result.combination.shareCopy)}&url=${encodeURIComponent(sharedUrl())}`,"_blank","noopener,noreferrer");
+  }
+  else if(action==="share-line"){
+    trackShare("line",state.result);
+    window.open(`https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(sharedUrl())}`,"_blank","noopener,noreferrer");
+  }
   else if(action==="share-compat"){
-    const r=state.compatibilityResult,text=`URASELAの${r.modeLabel}相性は${r.score}%｜${r.headline} #URASELA #ウラセラ相性`;
-    try{if(navigator.share)await navigator.share({title:"URASELA相性診断",text,url:location.href});else{await navigator.clipboard.writeText(text);showToast("相性結果をコピーしました");}}catch(error){if(error.name!=="AbortError")showToast("共有をキャンセルしました");}
+    const r=state.compatibilityResult,url=`${siteUrl}/compatibility/`,text=`URASELAの${r.modeLabel}相性は${r.score}%｜${r.headline}\n#URASELA #ウラセラ #相性診断`;
+    try{
+      if(navigator.share){await navigator.share({title:"URASELA相性診断",text,url});trackEvent("share",{method:"web_share",content_type:"compatibility",mode:r.mode,score:r.score});}
+      else{await navigator.clipboard.writeText(`${text}\n${url}`);showToast("相性結果とURLをコピーしました");trackEvent("share",{method:"clipboard",content_type:"compatibility",mode:r.mode,score:r.score});}
+    }catch(error){if(error.name!=="AbortError")showToast("共有できませんでした。もう一度お試しください");}
   }
   else if(action==="last-result"){
-    try{const saved=JSON.parse(localStorage.getItem("urasela:lastResult"));state.result=analyzeProfile(saved.profile,saved.answers.map(Number),saved.tarotSelections);localStorage.setItem("urasela:lastResult",JSON.stringify(state.result));renderResult();}catch{localStorage.removeItem("urasela:lastResult");showToast("前回の結果を読み込めませんでした");}
+    try{const saved=JSON.parse(localStorage.getItem("urasela:lastResult"));state.result=analyzeProfile(saved.profile,saved.answers.map(Number),saved.tarotSelections);localStorage.setItem("urasela:lastResult",JSON.stringify(state.result));updateRoute("./");renderResult();}catch{localStorage.removeItem("urasela:lastResult");showToast("前回の結果を読み込めませんでした");}
   }
 });
 
@@ -501,18 +609,38 @@ app.addEventListener("submit", event => {
     if(known&&!data.get("birthtime")){showToast("出生時刻を入力するか「分からない」を選んでください");return;}
     if(data.get("birthplace")==="海外"&&!String(data.get("country")||"").trim()){showToast("国・地域を入力してください");return;}
     state.profile={birthdate:String(data.get("birthdate")),gender:String(data.get("gender")||"回答しない"),birthplace:String(data.get("birthplace")),city:String(data.get("city")||"").trim(),country:String(data.get("country")||"").trim(),birthTimeKnown:known,birthtime:known?String(data.get("birthtime")):""};
-    state.questionIndex=0;renderQuestion();
+    state.questionIndex=0;trackEvent("questions_start");renderQuestion();
   }
   if(event.target.id==="compatibility-form"){
     const data=new FormData(event.target);state.compatibilityForm={mode:String(data.get("mode")),selfSurface:Number(data.get("selfSurface")),selfInner:Number(data.get("selfInner")),partnerSurface:Number(data.get("partnerSurface")),partnerInner:Number(data.get("partnerInner"))};
-    state.compatibilityResult=calculateCompatibility(state.compatibilityForm.selfSurface,state.compatibilityForm.selfInner,state.compatibilityForm.partnerSurface,state.compatibilityForm.partnerInner,state.compatibilityForm.mode);renderCompatibility();requestAnimationFrame(()=>qs(".compat-result")?.scrollIntoView({behavior:"smooth",block:"start"}));
+    state.compatibilityResult=calculateCompatibility(state.compatibilityForm.selfSurface,state.compatibilityForm.selfInner,state.compatibilityForm.partnerSurface,state.compatibilityForm.partnerInner,state.compatibilityForm.mode);
+    trackEvent("compatibility_use",{mode:state.compatibilityForm.mode,self_surface:state.compatibilityForm.selfSurface,self_inner:state.compatibilityForm.selfInner,partner_surface:state.compatibilityForm.partnerSurface,partner_inner:state.compatibilityForm.partnerInner,score:state.compatibilityResult.score});
+    renderCompatibility();requestAnimationFrame(()=>qs(".compat-result")?.scrollIntoView({behavior:"smooth",block:"start"}));
   }
 });
 
-function boot() {
+function renderRoute() {
   const code=new URLSearchParams(location.search).get("result");
   const shared=decodeSharedResult(code);
-  if(shared){state.result=shared;renderResult();}else renderHome();
+  if(shared){state.result=shared;renderResult();return;}
+  const parts=location.pathname.split("/").filter(Boolean);
+  const characterIndex=parts.lastIndexOf("characters");
+  if(characterIndex>=0){
+    const slug=parts[characterIndex+1];
+    if(slug){
+      const character=CHARACTERS.find(item=>item.slug===slug);
+      if(character){renderCharacterDetail(character.id);return;}
+    }
+    renderCharacters();return;
+  }
+  if(parts.at(-1)==="compatibility"){renderCompatibility();return;}
+  renderHome();
+}
+
+function boot() {
+  renderRoute();
+  initPrivacyControls();
+  window.addEventListener("popstate",renderRoute);
   if("serviceWorker" in navigator && (location.protocol==="https:" || location.hostname==="localhost")) navigator.serviceWorker.register("./sw.js").catch(()=>{});
 }
 

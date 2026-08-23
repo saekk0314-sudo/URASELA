@@ -10,7 +10,7 @@ export const DIMENSIONS = ["成功欲", "共感性", "論理性", "自由性", "
 
 export const CHARACTERS = [
   {
-    id: 1, icon: "♛", name: "無敵の主人公", en: "THE PROTAGONIST", catch: "みんなを巻き込む、物語の中心人物",
+    id: 1, slug: "hero", icon: "♛", name: "無敵の主人公", en: "THE PROTAGONIST", catch: "みんなを巻き込む、物語の中心人物",
     core: "自分が動けば空気も未来も変えられると信じる、熱量と求心力の人。迷いながらでも先頭に立ち、勝ち筋を作ります。",
     surface: "堂々として決断が速く、自然と人の視線を集めます。難しい場面ほど頼られる存在です。",
     inner: "負けた姿を見せたくない気持ちが強く、期待されない時間には急に不安になります。",
@@ -21,7 +21,7 @@ export const CHARACTERS = [
     tags: ["カリスマ", "自信家", "リーダー気質"], vector: [5,3,3,4,3,2], hue: 270
   },
   {
-    id: 2, icon: "☾", name: "夜更かしの夢想家", en: "THE DREAMER", catch: "誰にも見せない世界で、未来を描く人",
+    id: 2, slug: "dreamer", icon: "☾", name: "夜更かしの夢想家", en: "THE DREAMER", catch: "誰にも見せない世界で、未来を描く人",
     core: "豊かな想像力と共感力で、まだ形のない可能性を育てます。現実の向こう側にある意味を見つけるタイプです。",
     surface: "柔らかく聞き上手。人に合わせられる穏やかな印象を与えます。",
     inner: "本当は誰かの一番でありたい気持ちが強く、孤独になると想像の中へ逃げ込みます。",
@@ -32,7 +32,7 @@ export const CHARACTERS = [
     tags: ["繊細", "ロマンチスト", "甘え上手"], vector: [2,5,2,3,5,2], hue: 250
   },
   {
-    id: 3, icon: "♨", name: "一発逆転の勝負師", en: "THE CHALLENGER", catch: "逆風まで燃料に変えるチャレンジャー",
+    id: 3, slug: "challenger", icon: "♨", name: "一発逆転の勝負師", en: "THE CHALLENGER", catch: "逆風まで燃料に変えるチャレンジャー",
     core: "安全な正解より、心が震える一手を選びます。追い込まれた時ほど集中し、状況をひっくり返す力があります。",
     surface: "ノリが良く大胆で、失敗を恐れない人に見えます。",
     inner: "停滞への恐怖が強く、自分の価値を大きな結果で証明したくなります。",
@@ -43,7 +43,7 @@ export const CHARACTERS = [
     tags: ["挑戦者", "負けず嫌い", "火事場力"], vector: [5,2,2,5,3,1], hue: 15
   },
   {
-    id: 4, icon: "⌘", name: "結果主義の司令塔", en: "THE STRATEGIST", catch: "感情の奥で、勝ち筋を組み立てる",
+    id: 4, slug: "strategist", icon: "⌘", name: "結果主義の司令塔", en: "THE STRATEGIST", catch: "感情の奥で、勝ち筋を組み立てる",
     core: "状況を俯瞰し、最短ルートと人の動きを静かに読みます。派手さより再現性のある成果を好みます。",
     surface: "冷静で頭の回転が速く、頼れる現実派に見えます。",
     inner: "予想外に弱く、実は失敗や無能と思われることを強く恐れています。",
@@ -54,7 +54,7 @@ export const CHARACTERS = [
     tags: ["戦略家", "合理的", "指揮官"], vector: [5,2,5,3,1,5], hue: 225
   },
   {
-    id: 5, icon: "✦", name: "陽だまりの人気者", en: "THE SUNSHINE", catch: "いるだけで場の温度を上げる人",
+    id: 5, slug: "sunshine", icon: "✦", name: "陽だまりの人気者", en: "THE SUNSHINE", catch: "いるだけで場の温度を上げる人",
     core: "人の良いところを見つけ、場を明るくつなぐ天性のムードメーカー。喜びを分けるほどエネルギーが増えます。",
     surface: "親しみやすくポジティブ。初対面でも距離を縮めるのが得意です。",
     inner: "嫌われることへの不安があり、しんどい時ほど笑顔で隠すことがあります。",
@@ -65,7 +65,7 @@ export const CHARACTERS = [
     tags: ["ムードメーカー", "ポジティブ", "愛され力"], vector: [3,5,2,4,3,2], hue: 43
   },
   {
-    id: 6, icon: "⬟", name: "黙って守る番人", en: "THE GUARDIAN", catch: "言葉より行動で、大切な人を守る",
+    id: 6, slug: "guardian", icon: "⬟", name: "黙って守る番人", en: "THE GUARDIAN", catch: "言葉より行動で、大切な人を守る",
     core: "責任感と粘り強さで、安心できる土台を作ります。目立たなくても必要なことを最後までやり抜く人です。",
     surface: "落ち着いて誠実。約束を守る信頼できる人に見えます。",
     inner: "本音を後回しにして抱え込み、限界で突然距離を置くことがあります。",
@@ -76,7 +76,7 @@ export const CHARACTERS = [
     tags: ["しっかり者", "責任感", "一途"], vector: [3,4,4,1,3,5], hue: 28
   },
   {
-    id: 7, icon: "ϟ", name: "自由すぎる革命家", en: "THE REVOLUTIONARY", catch: "常識を一度壊して、新しい道を作る",
+    id: 7, slug: "revolutionary", icon: "ϟ", name: "自由すぎる革命家", en: "THE REVOLUTIONARY", catch: "常識を一度壊して、新しい道を作る",
     core: "既存のルールを疑い、自分の方法で未来を更新します。独創性とスピードで停滞した空気を変える人です。",
     surface: "マイペースで大胆。何をするか読めない面白さがあります。",
     inner: "縛られることへの警戒が強く、期待されるほど逃げたくなる時があります。",
@@ -87,7 +87,7 @@ export const CHARACTERS = [
     tags: ["自由人", "常識破壊", "アイデア型"], vector: [4,2,4,5,2,1], hue: 220
   },
   {
-    id: 8, icon: "⚖", name: "空気を変える接続者", en: "THE CONNECTOR", catch: "違う人同士を、ちょうどよくつなぐ",
+    id: 8, slug: "connector", icon: "⚖", name: "空気を変える接続者", en: "THE CONNECTOR", catch: "違う人同士を、ちょうどよくつなぐ",
     core: "人の温度差や場の詰まりを察知し、衝突を対話へ変えます。誰も置いていかない着地点を作る人です。",
     surface: "穏やかで話しやすく、公平な聞き役に見えます。",
     inner: "争いを避けるために自分の意見を薄め、あとからモヤモヤを抱えることがあります。",
@@ -98,7 +98,7 @@ export const CHARACTERS = [
     tags: ["バランサー", "聞き上手", "仲介役"], vector: [2,5,4,2,4,4], hue: 24
   },
   {
-    id: 9, icon: "▣", name: "静かな観測者", en: "THE OBSERVER", catch: "言葉の裏まで読み、核心を見つける",
+    id: 9, slug: "observer", icon: "▣", name: "静かな観測者", en: "THE OBSERVER", catch: "言葉の裏まで読み、核心を見つける",
     core: "すぐに結論へ飛びつかず、情報と人間を静かに観察します。深く知るほど独自の答えへたどり着く人です。",
     surface: "控えめで知的。落ち着いたミステリアスさがあります。",
     inner: "間違って理解されることを恐れ、説明する前に一人になることがあります。",
@@ -109,7 +109,7 @@ export const CHARACTERS = [
     tags: ["研究者", "洞察", "一人時間"], vector: [2,2,5,3,4,3], hue: 214
   },
   {
-    id: 10, icon: "♥", name: "距離感バグの魅了者", en: "THE ENCHANTER", catch: "近づいた瞬間、相手の心に火をつける",
+    id: 10, slug: "enchanter", icon: "♥", name: "距離感バグの魅了者", en: "THE ENCHANTER", catch: "近づいた瞬間、相手の心に火をつける",
     core: "感情表現と直感的なコミュニケーションで、人の心を動かします。『今この瞬間』の熱を生きる人です。",
     surface: "華やかで反応が良く、特別な親密さを感じさせます。",
     inner: "愛されている確信を求め、反応が薄いと試すような行動を取ることがあります。",
@@ -120,7 +120,7 @@ export const CHARACTERS = [
     tags: ["恋で生きる", "表現者", "惹きつけ力"], vector: [3,5,2,4,5,1], hue: 340
   },
   {
-    id: 11, icon: "✶", name: "期待燃料の表現者", en: "THE SHAPESHIFTER", catch: "求められた役を、自分の色に変える",
+    id: 11, slug: "shapeshifter", icon: "✶", name: "期待燃料の表現者", en: "THE SHAPESHIFTER", catch: "求められた役を、自分の色に変える",
     core: "場の期待を素早く読み、見せ方を自在に変えます。器用さの奥に、まだ決めきれない大きな可能性があります。",
     surface: "順応が速く多才。どんな人とも違う顔で自然に話せます。",
     inner: "評価がないと自分の輪郭を見失い、『本当の自分』が分からなくなる時があります。",
@@ -131,7 +131,7 @@ export const CHARACTERS = [
     tags: ["多才", "適応力", "変身型"], vector: [4,4,4,5,3,2], hue: 235
   },
   {
-    id: 12, icon: "▲", name: "沼る職人", en: "THE ARTISAN", catch: "好きなことだけ、異常に深くなる",
+    id: 12, slug: "artisan", icon: "▲", name: "沼る職人", en: "THE ARTISAN", catch: "好きなことだけ、異常に深くなる",
     core: "興味を持った対象へ静かに潜り、誰にも真似できない精度まで磨きます。言葉より作品と結果で語る人です。",
     surface: "淡々としてマイペース。こだわりの強い実力派に見えます。",
     inner: "納得できない自分を許せず、完成するまで人に見せられない時があります。",
@@ -142,7 +142,7 @@ export const CHARACTERS = [
     tags: ["職人気質", "没頭", "マイペース"], vector: [3,2,5,3,3,4], hue: 255
   },
   {
-    id: 13, icon: "◎", name: "未来設計の建築家", en: "THE ARCHITECT", catch: "まだない未来を、現実の計画へ落とす",
+    id: 13, slug: "architect", icon: "◎", name: "未来設計の建築家", en: "THE ARCHITECT", catch: "まだない未来を、現実の計画へ落とす",
     core: "長い時間軸で可能性を見抜き、目標から逆算して仕組みを作ります。個人の成功を超えた景色を描く人です。",
     surface: "向上心と行動力があり、夢を語るだけで終わらない人に見えます。",
     inner: "立ち止まることを敗北に感じ、達成しても満足できないことがあります。",
@@ -153,7 +153,7 @@ export const CHARACTERS = [
     tags: ["野心家", "長期目線", "開拓者"], vector: [5,2,5,4,2,4], hue: 32
   },
   {
-    id: 14, icon: "◇", name: "情が深すぎる共感者", en: "THE EMPATH", catch: "言葉になる前の気持ちまで受け取る",
+    id: 14, slug: "empath", icon: "◇", name: "情が深すぎる共感者", en: "THE EMPATH", catch: "言葉になる前の気持ちまで受け取る",
     core: "人の感情や空気の変化を細やかに感じ、傷ついた心に静かに寄り添います。感受性そのものが才能です。",
     surface: "優しく控えめで、相談しやすい安心感があります。",
     inner: "他人の感情を自分の責任のように背負い、急に何も感じたくなくなる時があります。",
@@ -164,7 +164,7 @@ export const CHARACTERS = [
     tags: ["繊細", "直感型", "共感力"], vector: [1,5,2,2,5,3], hue: 205
   },
   {
-    id: 15, icon: "∞", name: "逃げ足の速い旅人", en: "THE WANDERER", catch: "終わりを察知し、次の世界へ移る",
+    id: 15, slug: "wanderer", icon: "∞", name: "逃げ足の速い旅人", en: "THE WANDERER", catch: "終わりを察知し、次の世界へ移る",
     core: "変化の兆しを早く読み、合わない場所から軽やかに離れます。経験をつなぎ直し、自分だけの地図を作る人です。",
     surface: "つかみどころがなくクール。新しい環境への適応が速いです。",
     inner: "傷つく前に離れたい気持ちがあり、深く関わる直前に姿を消すことがあります。",
@@ -175,7 +175,7 @@ export const CHARACTERS = [
     tags: ["ミステリアス", "移動型", "リセット力"], vector: [3,2,3,5,4,1], hue: 278
   },
   {
-    id: 16, icon: "♧", name: "損しない現実派", en: "THE REALIST", catch: "優しさと現実を、同じ手で守る",
+    id: 16, slug: "realist", icon: "♧", name: "損しない現実派", en: "THE REALIST", catch: "優しさと現実を、同じ手で守る",
     core: "感情だけにも数字だけにも偏らず、生活が続く現実解を選びます。派手ではなくても周囲を安定へ導く人です。",
     surface: "穏やかで常識的。安心して相談できる堅実な印象です。",
     inner: "損や失敗への警戒が強く、挑戦したい気持ちにブレーキをかけすぎる時があります。",

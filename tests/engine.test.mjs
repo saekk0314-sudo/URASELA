@@ -16,6 +16,8 @@ const unknownTimeProfile = {
 test("正式データは16タイプ・24問・大アルカナ22枚を満たす", () => {
   assert.equal(CHARACTERS.length, 16);
   assert.equal(new Set(CHARACTERS.map(item => item.name)).size, 16);
+  assert.equal(new Set(CHARACTERS.map(item => item.slug)).size, 16);
+  assert.ok(CHARACTERS.every(item => /^[a-z0-9-]+$/.test(item.slug)));
   assert.equal(QUESTIONS.length, 24);
   assert.ok(QUESTIONS.every(question => question.choices.length === 5));
   assert.equal(TAROT.length, 22);
