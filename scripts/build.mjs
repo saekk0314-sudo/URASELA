@@ -5,6 +5,7 @@ import { LEGAL_PAGES } from "./content.mjs";
 
 const root = resolve(import.meta.dirname, "..");
 const output = resolve(root, "dist");
+const defaultAdsensePublisherId = "pub-9548970580748049";
 const required = [
   "index.html", "config.js", "src/app.js", "src/analytics.js", "src/ads.js", "src/engine.js",
   "src/data.js", "src/styles.css", "manifest.webmanifest", "assets/icon.svg", "assets/icon-192.png",
@@ -34,7 +35,7 @@ function siteOrigin() {
 const siteUrl = siteOrigin();
 const gaMeasurementId = configured("GA_MEASUREMENT_ID", /^G-[A-Z0-9]+$/);
 const adsenseClientId = configured("ADSENSE_CLIENT_ID", /^ca-pub-\d+$/);
-const adsensePublisherId = configured("ADSENSE_PUBLISHER_ID", /^pub-\d+$/);
+const adsensePublisherId = configured("ADSENSE_PUBLISHER_ID", /^pub-\d+$/) || defaultAdsensePublisherId;
 const adSlots = {
   homeBottom: configured("ADSENSE_SLOT_HOME_BOTTOM", /^\d+$/),
   postQuestions: configured("ADSENSE_SLOT_POST_QUESTIONS", /^\d+$/),
