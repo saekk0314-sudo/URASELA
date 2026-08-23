@@ -1,4 +1,4 @@
-const CACHE = "urasela-v2";
+const CACHE = "urasela-v3";
 const CORE = [
   "./", "./index.html", "./src/styles.css", "./src/data.js", "./src/engine.js", "./src/app.js", "./manifest.webmanifest",
   "./assets/icon.svg", "./assets/generated/hero-urasela.webp", "./assets/generated/characters-sheet.webp",
