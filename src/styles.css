@@ -288,6 +288,12 @@ h1,h2,h3,p { margin-top:0; }
 .result-tarot small { display:block; overflow-wrap:anywhere; color:#847aa7; }
 .result-tarot b { display:block; font:600 17px var(--serif); }
 .result-tarot p { color:#6e6a79; font-size:10px; }
+.result-tarot-readings { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin:16px 0 22px; text-align:left; }
+.result-tarot-readings article { display:grid; grid-template-columns:32px minmax(0,1fr); gap:10px; padding:14px; border:1px solid #e2ddec; border-radius:12px; background:rgba(255,255,255,.74); }
+.result-tarot-readings article>span { display:grid; place-items:center; width:32px; height:32px; border-radius:50%; background:#eee9ff; color:#6753ad; font:600 10px var(--sans); }
+.result-tarot-readings small { display:block; color:#8983a0; font-size:9px; }
+.result-tarot-readings b { display:block; margin:2px 0 4px; color:#292344; font:600 16px var(--serif); }
+.result-tarot-readings p { margin:0; color:#696477; font-size:10px; line-height:1.7; }
 .identity-section>h3 { margin:0 0 10px; color:#423680; font:600 26px var(--serif); }
 .identity-section>p { color:#545064; }
 .identity-section blockquote { margin:20px 0 0; padding:18px 20px; border-left:3px solid #7b64cf; background:#f5f2ff; color:#5e586e; font-size:13px; }
@@ -406,11 +412,11 @@ h1,h2,h3,p { margin-top:0; }
   .cta { min-height:51px; padding:12px 24px; font-size:14px; }
   .cta--hero { min-width:0; width:min(345px,100%); font-size:18px; }
   .hero__content>small { font-size:9px; }
-  .hero__label { top:148px; bottom:auto; width:118px; padding:9px 10px; }
-  .hero__label b { font-size:13px; }
-  .hero__label span { font-size:8px; }
-  .hero__label--surface { left:0; }
-  .hero__label--inner { right:0; }
+  .hero__label { top:68px; bottom:auto; width:122px; padding:6px 9px; border-radius:999px; background:rgba(9,8,31,.76); }
+  .hero__label b { font-size:12px; line-height:1.25; }
+  .hero__label span { margin-top:2px; font-size:7px; line-height:1.25; }
+  .hero__label--surface { left:10px; }
+  .hero__label--inner { right:10px; }
   .section { width:calc(100% - 24px); padding:55px 0; }
   .section>h2,.final-cta h2 { margin-bottom:24px; font-size:25px; }
   .method-grid { grid-template-columns:repeat(2,1fr); gap:9px; }
@@ -462,7 +468,8 @@ h1,h2,h3,p { margin-top:0; }
   .tarot-back { border-radius:8px; }
   .tarot-back::before { inset:10px; }
   .tarot-back small { bottom:18px; font-size:8px; }
-  .tarot-reveal { grid-template-columns:120px 1fr; gap:16px; padding:15px; }
+  .tarot-reveal { grid-template-columns:120px minmax(0,1fr); align-items:start; gap:16px; padding:15px; }
+  .tarot-reveal>div { min-width:0; }
   .tarot-reveal h2 { font-size:23px; }
   .tarot-reveal>div>p { font-size:10px; }
   .result-hero { padding:42px 9px 55px; }
@@ -502,13 +509,16 @@ h1,h2,h3,p { margin-top:0; }
   .planet-grid { grid-template-columns:repeat(5,1fr); gap:2px; }
   .planet-grid b { font-size:9px; }
   .nine-star b { font-size:10px; }
-  .result-tarot { grid-template-columns:1fr; gap:12px; }
-  .result-tarot>div { display:grid; grid-template-columns:96px minmax(0,1fr); grid-template-rows:auto auto 1fr; column-gap:13px; align-items:start; padding:11px; border:1px solid #e1dcec; border-radius:12px; background:rgba(255,255,255,.72); text-align:left; }
-  .result-tarot .tarot-art { grid-column:1; grid-row:1/4; width:96px; margin:0; }
-  .result-tarot small,.result-tarot b,.result-tarot p { grid-column:2; }
-  .result-tarot small { font-size:10px; }
-  .result-tarot b { font-size:16px; }
-  .result-tarot p { margin:4px 0 0; font-size:10px; line-height:1.65; }
+  .fortune-card--tarot .result-tarot { grid-template-columns:repeat(3,minmax(0,1fr)); gap:7px; }
+  .fortune-card--tarot .result-tarot>div { display:block; padding:0; border:0; background:none; text-align:center; }
+  .fortune-card--tarot .result-tarot .tarot-art { width:100%; margin:0 auto 7px; }
+  .fortune-card--tarot .result-tarot small { font-size:8px; line-height:1.45; }
+  .fortune-card--tarot .result-tarot b { margin-top:2px; font-size:13px; }
+  .result-tarot-readings { grid-template-columns:1fr; gap:8px; margin-top:14px; }
+  .result-tarot-readings article { grid-template-columns:28px minmax(0,1fr); gap:9px; padding:11px 12px; }
+  .result-tarot-readings article>span { width:28px; height:28px; font-size:9px; }
+  .result-tarot-readings b { font-size:15px; }
+  .result-tarot-readings p { font-size:10px; }
   .identity-section>h3 { font-size:20px; }
   .life-grid article { padding:18px 14px 18px 53px; }
   .life-grid article>span { left:14px; top:17px; }
