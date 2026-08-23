@@ -1,0 +1,11 @@
+{
+  "name": "URASELA（ウラセラ）",
+  "short_name": "URASELA",
+  "description": "表と裏、2人のあなたを読む。",
+  "lang": "ja",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#050719",
+  "theme_color": "#0d1026",
+  "icons": [{ "src": "assets/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}
