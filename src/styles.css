@@ -123,7 +123,7 @@ h1,h2,h3,p { margin-top:0; }
 .character-portrait { position:relative; display:block; overflow:hidden; aspect-ratio:1; background:#e9e6f6; }
 .character-portrait img { position:absolute; width:400%; max-width:none; height:400%; left:calc(var(--col) * -100%); top:calc(var(--row) * -100%); }
 .tarot-art { position:relative; display:block; overflow:hidden; aspect-ratio:2/3; background:#101333; box-shadow:0 8px 24px rgba(4,5,20,.42); transform-origin:center; }
-.tarot-art img { position:absolute; width:600%; max-width:none; height:200%; left:calc(var(--col) * -100%); top:calc(var(--row) * -100%); }
+.tarot-art img { position:absolute; width:var(--sprite-width); max-width:none; height:var(--sprite-height); left:var(--sprite-left); top:var(--sprite-top); }
 .tarot-art.is-reversed { transform:rotate(180deg); }
 
 .app-screen { width:min(760px,calc(100% - 32px)); min-height:calc(100vh - 72px); margin:0 auto; padding:54px 0 100px; }
