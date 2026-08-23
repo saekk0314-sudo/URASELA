@@ -1,0 +1,14 @@
+{
+  "name": "urasela",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "5つの占術と24問で表と裏の自分を読む、完全無料の自己分析Webアプリ",
+  "scripts": {
+    "dev": "node scripts/serve.mjs",
+    "build": "node scripts/build.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "check": "node --check src/data.js && node --check src/engine.js && node --check src/app.js"
+  },
+  "engines": { "node": ">=20" }
+}
