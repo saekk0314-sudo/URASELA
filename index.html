@@ -4,27 +4,72 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0d1026">
-  <meta name="description" content="5つの占術と24問から、表キャラと裏キャラを導き出す完全無料の自己分析。">
+  <meta name="application-name" content="URASELA">
+  <meta name="robots" content="index,follow,max-image-preview:large">
+  <meta name="description" content="URASELA（ウラセラ）は、5つの占術と24問の深層質問から表キャラと裏キャラを導く、登録不要・完全無料の性格診断・自己分析サービスです。">
   <meta property="og:title" content="URASELA｜表と裏、2人のあなたを読む。">
-  <meta property="og:description" content="表16タイプ×裏16タイプ。あなたの中の、まだ知らないあなたへ。">
+  <meta property="og:description" content="5つの占術×24問。表16タイプ×裏16タイプ＝256通りから、まだ知らない自分を読む無料診断。">
   <meta property="og:type" content="website">
   <meta property="og:locale" content="ja_JP">
   <meta property="og:site_name" content="URASELA">
   <meta property="og:url" content="https://urasela.pages.dev/">
   <meta property="og:image" content="https://urasela.pages.dev/assets/generated/og-urasela.jpg">
+  <meta property="og:image:type" content="image/jpeg">
+  <meta property="og:image:alt" content="URASELA 表と裏、2人のあなたを読む">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="URASELA｜表と裏、2人のあなたを読む。">
+  <meta name="twitter:description" content="5つの占術×24問から、表キャラと裏キャラを導く完全無料の性格診断。">
+  <meta name="twitter:image" content="https://urasela.pages.dev/assets/generated/og-urasela.jpg">
   <link rel="canonical" href="https://urasela.pages.dev/">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+  <link rel="icon" href="assets/icon-192.png" sizes="192x192" type="image/png">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" sizes="180x180">
+  <link rel="preload" href="assets/generated/hero-urasela.webp" as="image" type="image/webp" fetchpriority="high">
   <link rel="stylesheet" href="src/styles.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": "https://urasela.pages.dev/#website",
+        "url": "https://urasela.pages.dev/",
+        "name": "URASELA（ウラセラ）",
+        "description": "表と裏、2人のあなたを読む無料の占い・性格診断サービス",
+        "inLanguage": "ja"
+      },
+      {
+        "@type": "WebApplication",
+        "@id": "https://urasela.pages.dev/#app",
+        "name": "URASELA",
+        "url": "https://urasela.pages.dev/",
+        "applicationCategory": "LifestyleApplication",
+        "operatingSystem": "Any",
+        "isAccessibleForFree": true,
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "JPY" },
+        "description": "四柱推命・西洋占星術・数秘術・九星気学・タロットと24問をクロス解析する無料の自己分析Webアプリ"
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          { "@type": "Question", "name": "URASELAは無料ですか？", "acceptedAnswer": { "@type": "Answer", "text": "登録不要で、すべて無料で利用できます。" } },
+          { "@type": "Question", "name": "出生時間が分からなくても診断できますか？", "acceptedAnswer": { "@type": "Answer", "text": "診断できます。四柱推命の時柱のみ参考外とし、その他の結果は通常どおり計算します。" } },
+          { "@type": "Question", "name": "入力した情報は送信されますか？", "acceptedAnswer": { "@type": "Answer", "text": "生年月日・出生地・回答内容は端末内だけで計算し、外部へ送信しません。任意で同意した場合のみ、個人を直接特定しない利用状況イベントを計測します。" } }
+        ]
+      }
+    ]
+  }
+  </script>
   <title>URASELA｜表と裏、2人のあなたを読む。</title>
 </head>
 <body>
   <a class="skip-link" href="#main">本文へ移動</a>
   <div id="app" aria-live="polite"></div>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="config.js"></script>
   <script type="module" src="src/app.js"></script>
 </body>
 </html>
