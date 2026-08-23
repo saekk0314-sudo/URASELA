@@ -11,6 +11,7 @@ const defaultAdsensePublisherId = "pub-9548970580748049";
 const required = [
   "index.html",
   "config.js",
+  "sitemap.xml",
   "src/app.js",
   "src/analytics.js",
   "src/ads.js",
@@ -99,15 +100,6 @@ const escapeHtml = value =>
     ">": "&gt;",
     "\"": "&quot;",
     "'": "&#39;"
-  })[character]);
-
-const escapeXml = value =>
-  String(value ?? "").replace(/[&<>"']/g, character => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    "\"": "&quot;",
-    "'": "&apos;"
   })[character]);
 
 const jsonLd = value =>
@@ -757,6 +749,7 @@ await mkdir(
 for (const entry of [
   "index.html",
   "config.js",
+  "sitemap.xml",
   "manifest.webmanifest",
   "sw.js",
   "src",
@@ -849,83 +842,6 @@ for (const page of LEGAL_PAGES) {
 }
 
 /* ==========================================================
-   SITEMAP
-========================================================== */
-
-const sitemapPaths = [
-  "",
-  "characters",
-
-  ...CHARACTERS.map(
-    character =>
-      `characters/${character.slug}`
-  ),
-
-  "compatibility",
-
-  ...LEGAL_PAGES.map(
-    page =>
-      page.slug
-  )
-];
-
-const lastmod =
-  new Date()
-    .toISOString()
-    .slice(0, 10);
-
-const sitemapEntries =
-  sitemapPaths.map(
-    (path, index) => {
-
-      const url =
-        escapeXml(
-          canonical(path)
-        );
-
-      const priority =
-        path === ""
-          ? "1.0"
-          : path === "characters" ||
-            path === "compatibility"
-          ? "0.9"
-          : path.startsWith("characters/")
-          ? "0.8"
-          : "0.5";
-
-      const changefreq =
-        path === ""
-          ? "weekly"
-          : path.startsWith("characters")
-          ? "monthly"
-          : "monthly";
-
-      return [
-        "  <url>",
-        `    <loc>${url}</loc>`,
-        `    <lastmod>${lastmod}</lastmod>`,
-        `    <changefreq>${changefreq}</changefreq>`,
-        `    <priority>${priority}</priority>`,
-        "  </url>"
-      ].join("\n");
-    }
-  )
-  .join("\n");
-
-const sitemapXml = [
-  '<?xml version="1.0" encoding="UTF-8"?>',
-  '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
-  sitemapEntries,
-  "</urlset>",
-  ""
-].join("\n");
-
-await writeOutput(
-  "sitemap.xml",
-  sitemapXml
-);
-
-/* ==========================================================
    ROBOTS
 ========================================================== */
 
@@ -987,7 +903,6 @@ await writeOutput(
 
 console.log(
   `URASELA static build completed: dist/ (` +
-  `${sitemapPaths.length} indexable URLs, ` +
   `analytics ${gaMeasurementId ? "configured" : "disabled"}, ` +
   `ads ${adsenseClientId ? "configured" : "disabled"})`
 );
