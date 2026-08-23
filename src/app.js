@@ -70,7 +70,31 @@ function tarotArt(card, className="") {
   const sheet = card.id < 11 ? "a" : "b";
   const col = localId % 6;
   const row = Math.floor(localId / 6);
-  return `<span class="tarot-art ${className} ${card.reversed ? "is-reversed" : ""}" style="--col:${col};--row:${row}" role="img" aria-label="${escapeHtml(card.name)} ${card.reversed ? "逆位置" : "正位置"}">
+  // The generated sheets do not use equal-width cells. Cropping them as a
+  // regular 6 x 2 grid exposes a strip of the neighbouring card on iOS.
+  // These frames follow the actual outer gold borders in each sheet.
+  const frames = sheet === "a"
+    ? {
+        x: [15, 309, 603, 898, 1192, 1487],
+        width: [275, 275, 275, 275, 275, 275],
+        y: [15, 454],
+        height: [418, 417]
+      }
+    : {
+        x: [14, 344, 649, 934, 1217, 1503],
+        width: [313, 288, 270, 267, 270, 258],
+        y: [11, 443],
+        height: [416, 427]
+      };
+  const cropWidth = frames.width[col];
+  const cropHeight = frames.height[row];
+  const spriteStyle = [
+    `--sprite-width:${(1774 / cropWidth) * 100}%`,
+    `--sprite-height:${(887 / cropHeight) * 100}%`,
+    `--sprite-left:${-(frames.x[col] / cropWidth) * 100}%`,
+    `--sprite-top:${-(frames.y[row] / cropHeight) * 100}%`
+  ].join(";");
+  return `<span class="tarot-art ${className} ${card.reversed ? "is-reversed" : ""}" style="${spriteStyle}" role="img" aria-label="${escapeHtml(card.name)} ${card.reversed ? "逆位置" : "正位置"}">
     <img src="assets/generated/tarot-sheet-${sheet}.webp" alt="" width="1774" height="887">
   </span>`;
 }
