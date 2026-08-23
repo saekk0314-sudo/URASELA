@@ -144,7 +144,7 @@ function renderProfileForm() {
     <div class="screen-heading"><span>01 / 04</span><p>まずは、生まれ持ったあなたを教えてください</p><h1>基本情報</h1></div>
     <div class="privacy-note"><span>♢</span><p><b>入力情報は端末内だけで計算</b><br>登録・外部送信はありません。</p></div>
     <form id="profile-form" class="profile-form">
-      <label class="field"><span>生年月日 <em>必須</em></span><input required type="date" name="birthdate" min="1900-01-01" max="${today}" value="${escapeHtml(profile.birthdate)}"></label>
+      <label class="field"><span>生年月日 <em>必須</em></span><span class="native-input-shell"><input required type="date" name="birthdate" min="1900-01-01" max="${today}" value="${escapeHtml(profile.birthdate)}"></span></label>
       <fieldset class="field"><legend>性別</legend><div class="choice-chips">${["男性","女性","その他","回答しない"].map(value => `<label><input type="radio" name="gender" value="${value}" ${profile.gender === value ? "checked" : ""}><span>${value}</span></label>`).join("")}</div></fieldset>
       <label class="field"><span>出生地 <em>必須</em></span><select required name="birthplace">${PREFECTURES.map(value => `<option ${profile.birthplace === value ? "selected" : ""}>${value}</option>`).join("")}</select></label>
       <label class="field country-field ${profile.birthplace === "海外" ? "" : "is-hidden"}"><span>国・地域 <em>必須</em></span><input name="country" autocomplete="country-name" placeholder="例：韓国、USA、フランス" ${profile.birthplace === "海外" ? "required" : ""} value="${escapeHtml(profile.country)}"></label>
@@ -153,7 +153,7 @@ function renderProfileForm() {
         <label><input type="radio" name="birthTimeKnown" value="yes" ${profile.birthTimeKnown ? "checked" : ""}><span>分かる</span></label>
         <label><input type="radio" name="birthTimeKnown" value="no" ${!profile.birthTimeKnown ? "checked" : ""}><span>分からない</span></label>
       </div><p class="field-help">分からなくても時柱以外は正常に計算し、最後まで診断できます。</p></fieldset>
-      <label class="field time-field ${profile.birthTimeKnown ? "" : "is-hidden"}"><span>生まれた時刻</span><input type="time" name="birthtime" value="${escapeHtml(profile.birthtime)}"></label>
+      <label class="field time-field ${profile.birthTimeKnown ? "" : "is-hidden"}"><span>生まれた時刻</span><span class="native-input-shell"><input type="time" name="birthtime" value="${escapeHtml(profile.birthtime)}"></span></label>
       <button class="cta cta--full" type="submit">24の深層質問へ進む <span>→</span></button>
       <button class="sub-button" type="button" data-action="home">TOPへ戻る</button>
     </form>
