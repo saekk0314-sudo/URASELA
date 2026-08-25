@@ -11,6 +11,11 @@ test("SEOの基本メタデータと構造化データを持つ", async () => {
     'rel="canonical"', 'property="og:title"', 'name="twitter:card"',
     'type="application/ld+json"', 'rel="manifest"', 'rel="apple-touch-icon"'
   ]) assert.ok(html.includes(marker), marker);
+  assert.match(html, /<title>URASELA（ウラセラ）/);
+  assert.match(html, /5つの占術×24問/);
+  for (const match of html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)) {
+    assert.doesNotThrow(() => JSON.parse(match[1]));
+  }
   assert.ok(!html.includes("googletagmanager.com"));
   assert.ok(!html.includes("ca-pub-000"));
 });
@@ -50,7 +55,9 @@ test("診断から共有までのファネルイベントを実装する", async
 
 test("ビルドはSEOファイルとキャラ個別ページを実ファイルとして生成する", async () => {
   const build = await source("../scripts/build.mjs");
-  for (const output of ["sitemap.xml", "robots.txt", "ads.txt", "_headers", "characters/${character.slug}/index.html"]) {
+  for (const output of ["sitemap.xml", "robots.txt", "ads.txt", "_headers", "404.html", "characters/${character.slug}/index.html"]) {
     assert.ok(build.includes(output), output);
   }
+  assert.match(build, /homeMarkup\(\)/);
+  assert.match(build, /noindex,follow/);
 });
