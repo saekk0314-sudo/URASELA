@@ -160,8 +160,8 @@ function tarotArt(card, className="") {
 function renderHome() {
   state.screen = "home";
   setPageMeta({
-    title: "URASELA｜表と裏、2人のあなたを読む。",
-    description: "URASELA（ウラセラ）は、5つの占術と24問の深層質問から表キャラと裏キャラを導く、登録不要・完全無料の性格診断・自己分析サービスです。"
+    title: "URASELA（ウラセラ）｜5つの占術×24問で表と裏を読む無料診断",
+    description: "URASELA（ウラセラ）は、四柱推命・西洋占星術・数秘術・九星気学・タロットと24問の深層質問を組み合わせ、表キャラ×裏キャラを256通りから導く登録不要・完全無料の占い・性格診断・自己分析サービスです。"
   });
   const sampleA = CHARACTERS[0], sampleB = CHARACTERS[1];
   const methods = FORTUNE_METHODS.map(item => `<article class="method-card"><span>${item.icon}</span><h3>${item.name}</h3><p>${item.lead}</p></article>`).join("");
@@ -434,7 +434,7 @@ function renderResult() {
 
 function renderCharacters() {
   state.screen="characters";
-  setPageMeta({ title:"URASELA 16タイプキャラクター一覧｜表キャラ・裏キャラ", description:"URASELAの16タイプを一覧で紹介。各キャラクターの性格、表に出た場合、裏に出た場合、恋愛、仕事を読んで無料診断へ進めます。", path:"characters" });
+  setPageMeta({ title:"URASELA（ウラセラ）16タイプ一覧｜表キャラ・裏キャラ", description:"URASELA（ウラセラ）の16タイプを一覧で紹介。各キャラクターの性格、表に出た場合、裏に出た場合、恋愛、仕事を読んで無料診断へ進めます。", path:"characters" });
   const content=`<section class="directory-hero"><p class="section-kicker">16 TYPES</p><h1>あなたの中にいる<br>16人のウラセラたち</h1><p>同じキャラでも、表に出るか裏に出るかで意味は変わります。</p></section>
     <section class="character-directory"><div class="character-grid">${CHARACTERS.map(character=>`<a class="character-card" href="${characterUrl(character)}" data-action="character-detail" data-id="${character.id}">${characterPortrait(character)}<span><small>TYPE ${pad(character.id)}・${character.en}</small><h2>${character.name}</h2><b>${character.catch}</b><p>${character.core}</p><em>詳しく見る →</em></span></a>`).join("")}</div></section>${footer()}`;
   app.innerHTML=shell(content);
@@ -448,7 +448,7 @@ function renderCharacterDetail(id) {
   if (!character) return;
   state.selectedCharacter=character;
   state.screen="character-detail";
-  setPageMeta({ title:`${character.name}｜URASELA 16タイプ性格診断`, description:`${character.name}（${character.en}）の基本性格、表に出た時、裏に出た時、恋愛、仕事、強み、弱みを紹介。`, path:characterUrl(character) });
+  setPageMeta({ title:`${character.name}｜URASELA（ウラセラ）16タイプ診断`, description:`${character.name}（${character.en}）の基本性格、表に出た時、裏に出た時、恋愛、仕事、強み、弱みを紹介。無料診断であなたの表キャラ×裏キャラを確認できます。`, path:characterUrl(character) });
   const sections=[["表に出た時",character.surface],["裏に出た時",character.inner],["恋愛",character.love],["仕事",character.work],["お金",character.money],["強み",character.strength],["弱み",character.weakness],["伸ばし方",character.growth]];
   const content=`<section class="character-detail"><a class="back-button" href="characters/" data-action="characters">← キャラ一覧</a><div class="character-detail__hero">${characterPortrait(character,"character-portrait--detail")}<div><small>TYPE ${pad(character.id)}</small><h1>${character.name}</h1><em>${character.en}</em><b>${character.catch}</b><div class="tag-row">${character.tags.map(tag=>`<span>#${tag}</span>`).join("")}</div></div></div><div class="character-detail__core"><h2>基本性格</h2><p>${character.core}</p></div><div class="detail-grid">${sections.map(([title,text])=>`<article><h3>${title}</h3><p>${text}</p></article>`).join("")}<article><h3>相性</h3><p>同じタイプでも、表と裏の組み合わせで相性は変わります。恋愛・友達・仕事の3つから2人を解析できます。</p><a class="text-link" href="compatibility/" data-action="compatibility">相性を確認する →</a></article></div><button class="cta cta--full" data-action="start">自分の表と裏を診断する →</button></section>${footer()}`;
   app.innerHTML=shell(content);
@@ -461,7 +461,7 @@ function typeOptions(selected) { return CHARACTERS.map(character=>`<option value
 
 function renderCompatibility() {
   state.screen="compatibility";
-  setPageMeta({ title:"無料の恋愛・友達・仕事相性診断｜URASELA", description:"表キャラ×裏キャラ同士で、恋愛・友達・仕事の相性を無料診断。惹かれ合うポイント、ズレるポイント、長続きのコツが分かります。", path:"compatibility" });
+  setPageMeta({ title:"無料の恋愛・友達・仕事相性診断｜URASELA（ウラセラ）", description:"表キャラ×裏キャラ同士で、恋愛・友達・仕事の相性を無料診断。相性％、惹かれ合うポイント、ズレるポイント、長続きのコツが分かります。", path:"compatibility" });
   if (state.result) {
     state.compatibilityForm.selfSurface=state.result.surface.id;
     state.compatibilityForm.selfInner=state.result.inner.id;

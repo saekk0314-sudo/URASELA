@@ -1,6 +1,6 @@
 import { cp, mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
-import { CHARACTERS } from "../src/data.js";
+import { CHARACTERS, FAQ, FORTUNE_METHODS } from "../src/data.js";
 import { LEGAL_PAGES } from "./content.mjs";
 
 const root = resolve(import.meta.dirname, "..");
@@ -119,21 +119,23 @@ function pageHead({
   description,
   path = "",
   base = "./",
-  schema
+  schema,
+  robots = "index,follow,max-image-preview:large",
+  includeCanonical = true
 }) {
   const url = canonical(path);
 
   return `<meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0d1026">
-  <meta name="robots" content="index,follow,max-image-preview:large">
+  <meta name="robots" content="${robots}">
   <meta name="description" content="${escapeHtml(description)}">
 
   <meta property="og:title" content="${escapeHtml(title)}">
   <meta property="og:description" content="${escapeHtml(description)}">
   <meta property="og:type" content="website">
   <meta property="og:locale" content="ja_JP">
-  <meta property="og:site_name" content="URASELA">
+  <meta property="og:site_name" content="URASELA（ウラセラ）">
   <meta property="og:url" content="${url}">
   <meta property="og:image" content="${siteUrl}/assets/generated/og-urasela.jpg">
   <meta property="og:image:width" content="1200">
@@ -145,7 +147,7 @@ function pageHead({
   <meta name="twitter:description" content="${escapeHtml(description)}">
   <meta name="twitter:image" content="${siteUrl}/assets/generated/og-urasela.jpg">
 
-  <link rel="canonical" href="${url}">
+  ${includeCanonical ? `<link rel="canonical" href="${url}">` : ""}
   <base href="${base}">
 
   <link rel="manifest" href="manifest.webmanifest">
@@ -217,6 +219,161 @@ function portrait(character, className = "") {
   </span>`;
 }
 
+function homeFooter() {
+  return `<footer class="footer">
+    <div>
+      ${brandLink()}
+      <p>表のあなたと裏のあなた。<br>まだ知らない自分に出会う占い。</p>
+    </div>
+    <nav aria-label="フッターナビゲーション">
+      <a href="./">TOP</a>
+      <a href="characters/">キャラ一覧</a>
+      <a href="compatibility/">相性チェック</a>
+      <a href="#flow">診断の流れ</a>
+      <a href="#faq">よくある質問</a>
+      <a href="about/">URASELAについて</a>
+      <a href="privacy/">プライバシーポリシー</a>
+      <a href="disclaimer/">免責事項</a>
+      <a href="contact/">お問い合わせ</a>
+      <a href="terms/">利用規約</a>
+    </nav>
+    <small>© 2026 URASELA. 結果は娯楽・自己理解のための参考情報です。</small>
+  </footer>`;
+}
+
+function homeMarkup() {
+  const sampleA = CHARACTERS[0];
+  const sampleB = CHARACTERS[1];
+  const methods = FORTUNE_METHODS.map(item => `
+    <article class="method-card">
+      <span>${escapeHtml(item.icon)}</span>
+      <h3>${escapeHtml(item.name)}</h3>
+      <p>${escapeHtml(item.lead)}</p>
+    </article>`).join("");
+  const faq = FAQ.map(([question, answer], index) => `
+    <details class="faq-item" ${index === 0 ? "open" : ""}>
+      <summary>${escapeHtml(question)}<span>＋</span></summary>
+      <p>${escapeHtml(answer)}</p>
+    </details>`).join("");
+
+  const content = `<section class="hero" aria-labelledby="hero-title">
+      <img class="hero__art" src="assets/generated/hero-urasela.webp" alt="紫の月を背負う表キャラと青い月を背負う裏キャラ" width="2048" height="1152" fetchpriority="high" decoding="async">
+      <div class="hero__shade"></div>
+      <div class="hero__content">
+        <p class="eyebrow">表だけじゃ、あなたはわからない。</p>
+        <h1 id="hero-title">あなたは、まだ<br><strong>自分の「裏」</strong>を<br>知らない。</h1>
+        <p class="hero__lead">5つの占術 × 24の深層質問から<br>表キャラと裏キャラを導き出す</p>
+        <p class="formula"><b>16</b> TYPE <span>×</span> <b>16</b> TYPE<br><em>= 256 PATTERNS</em></p>
+        <button class="cta cta--hero" data-action="start">無料でウラセラする <span>→</span></button>
+        <small>登録不要・完全無料・約3分で完了</small>
+      </div>
+      <div class="hero__label hero__label--surface"><b>表キャラ</b><span>外に見せるあなた</span></div>
+      <div class="hero__label hero__label--inner"><b>裏キャラ</b><span>心の奥にいるあなた</span></div>
+    </section>
+    <section class="section methods" aria-labelledby="methods-title">
+      <p class="section-kicker">WHY URASELA</p>
+      <h2 id="methods-title">なぜ、あなたの表と裏がわかるの？</h2>
+      <div class="method-grid">${methods}</div>
+    </section>
+    <section class="section flow" id="flow" aria-labelledby="flow-title">
+      <p class="section-kicker">3 STEPS</p>
+      <h2 id="flow-title">ウラセラの診断フロー</h2>
+      <div class="flow-grid">
+        <article><small>STEP 01</small><b>24の質問に答える</b><p>お金・恋愛・成功欲・嫉妬などから、本音と価値観を深掘り。</p><span class="flow-visual">A<br>B<br>C</span></article>
+        <article><small>STEP 02</small><b>5つの占術で分析</b><p>生まれ持った資質と、現在のあなたを実計算してクロス解析。</p><span class="flow-visual flow-visual--orbit">✦</span></article>
+        <article><small>STEP 03</small><b>表 × 裏が判明</b><p>256通りの組み合わせから、あなただけの結果を届けます。</p><span class="flow-visual flow-visual--pair">☾ × ✦</span></article>
+      </div>
+    </section>
+    <section class="section result-preview" aria-labelledby="preview-title">
+      <p class="section-kicker">YOUR URASELA</p>
+      <h2 id="preview-title">診断結果のイメージ</h2>
+      <div class="preview-grid">
+        <div class="sample-pair">
+          <article>${portrait(sampleA)}<small>表キャラ</small><h3>${escapeHtml(sampleA.name)}</h3><p>${escapeHtml(sampleA.catch)}</p></article>
+          <span class="sample-pair__x">×</span>
+          <article>${portrait(sampleB)}<small>裏キャラ</small><h3>${escapeHtml(sampleB.name)}</h3><p>${escapeHtml(sampleB.catch)}</p></article>
+        </div>
+        <article class="sample-score"><small>TYPE 01 × TYPE 02</small><p>総合運勢</p><b>87<em>%</em></b><div><span style="--value:90%">恋愛運</span><span style="--value:82%">仕事運</span><span style="--value:85%">人間関係</span></div></article>
+        <article class="sample-compat"><h3>あの人との相性もチェック！</h3><p>恋愛・友達・仕事。表と裏の4つの視点から2人を分析。</p><a class="cta cta--small" href="compatibility/">相性チェックへ →</a><span aria-hidden="true">♡</span></article>
+      </div>
+    </section>
+    <section class="section characters-teaser" aria-labelledby="teaser-title">
+      <p class="section-kicker">16 TYPES</p>
+      <h2 id="teaser-title">あなたの中にいる16人</h2>
+      <div class="mini-character-row">${CHARACTERS.slice(0, 8).map(character => `
+        <a href="characters/${character.slug}/">
+          ${portrait(character)}
+          <b>${escapeHtml(character.name)}</b>
+        </a>`).join("")}</div>
+      <a class="text-link" href="characters/">16キャラをすべて見る →</a>
+    </section>
+    <section class="section faq" id="faq" aria-labelledby="faq-title">
+      <p class="section-kicker">FAQ</p>
+      <h2 id="faq-title">よくある質問</h2>
+      <div class="faq-list">${faq}</div>
+    </section>
+    <section class="final-cta">
+      <p>あなたの中には、まだ出会っていないあなたがいる。</p>
+      <h2>表と裏、2人のあなたを読もう。</h2>
+      <button class="cta" data-action="start">今すぐ無料で診断する →</button>
+    </section>
+    ${homeFooter()}`;
+
+  return `<div class="site site--dark">
+    <header class="site-header">
+      ${brandLink()}
+      <nav class="desktop-nav" aria-label="メインナビゲーション">
+        <a href="./">TOP</a>
+        <a href="characters/">キャラ一覧</a>
+        <a href="compatibility/">相性チェック</a>
+        <a href="#flow">診断の流れ</a>
+        <a href="#faq">よくある質問</a>
+        <button class="nav-cta" data-action="start">今すぐ無料で診断する</button>
+      </nav>
+    </header>
+    <main id="main">${content}</main>
+    <nav class="mobile-nav" aria-label="モバイルナビゲーション">
+      <a href="./"><span>✦</span>TOP</a>
+      <a href="characters/"><span>▤</span>キャラ</a>
+      <button class="mobile-nav__main" data-action="start"><span>◇</span>診断</button>
+      <a href="compatibility/"><span>♡</span>相性</a>
+      <a href="#faq"><span>?</span>FAQ</a>
+    </nav>
+  </div>`;
+}
+
+function notFoundDocument() {
+  const title = "ページが見つかりません｜URASELA（ウラセラ）";
+  const description = "お探しのページは移動または削除された可能性があります。URASELAのトップページ、16タイプ一覧、相性診断をご利用ください。";
+  const content = `<div class="site site--dark">
+    <header class="site-header">${brandLink()}</header>
+    <main id="main" class="legal-page">
+      <p class="section-kicker">404 NOT FOUND</p>
+      <h1>ページが見つかりません</h1>
+      <p class="legal-lead">URLをご確認いただくか、トップページからお進みください。</p>
+      <div class="legal-content"><section><h2>こちらから探せます</h2><p><a class="text-link" href="./">URASELAトップへ →</a></p><p><a class="text-link" href="characters/">16タイプ一覧へ →</a></p><p><a class="text-link" href="compatibility/">相性診断へ →</a></p></section></div>
+    </main>
+    ${staticFooter()}
+  </div>`;
+
+  return `<!doctype html>
+<html lang="ja">
+<head>
+${pageHead({
+  title,
+  description,
+  base: `${siteUrl}/`,
+  robots: "noindex,follow",
+  includeCanonical: false
+})}
+</head>
+<body>
+  <a class="skip-link" href="#main">本文へ移動</a>
+  ${content}
+</body>
+</html>`;
+}
+
 function appDocument({
   title,
   description,
@@ -249,7 +406,7 @@ ${pageHead({
 
 function characterDocument(character) {
   const title =
-    `${character.name}｜URASELA 16タイプ｜表キャラ・裏キャラ`;
+    `${character.name}｜URASELA（ウラセラ）16タイプ診断`;
 
   const description =
     `${character.name}（${character.en}）の基本性格、` +
@@ -391,10 +548,10 @@ function characterDocument(character) {
 
 function charactersDocument() {
   const title =
-    "URASELA 16タイプキャラクター一覧｜表キャラ・裏キャラ";
+    "URASELA（ウラセラ）16タイプ一覧｜表キャラ・裏キャラ";
 
   const description =
-    "URASELAの16タイプを一覧で紹介。" +
+    "URASELA（ウラセラ）の16タイプを一覧で紹介。" +
     "各キャラクターの性格、表に出た場合、裏に出た場合、恋愛、仕事を読んで無料診断へ進めます。";
 
   const cards = CHARACTERS.map(character => `
@@ -503,7 +660,7 @@ function charactersDocument() {
 
 function compatibilityDocument() {
   const title =
-    "無料の恋愛・友達・仕事相性診断｜URASELA";
+    "無料の恋愛・友達・仕事相性診断｜URASELA（ウラセラ）";
 
   const description =
     "表キャラ×裏キャラ同士で、恋愛・友達・仕事の相性を無料診断。" +
@@ -790,7 +947,7 @@ await writeOutput(
    HOME
 ========================================================== */
 
-const indexHtml = (
+const indexTemplate = (
   await readFile(
     resolve(output, "index.html"),
     "utf8"
@@ -800,9 +957,28 @@ const indexHtml = (
   siteUrl
 );
 
+const emptyAppRoot =
+  '<div id="app" aria-live="polite"></div>';
+
+if (!indexTemplate.includes(emptyAppRoot)) {
+  throw new Error(
+    "index.html app root was not found for home prerendering"
+  );
+}
+
+const indexHtml = indexTemplate.replace(
+  emptyAppRoot,
+  `<div id="app" aria-live="polite">${homeMarkup()}</div>`
+);
+
 await writeOutput(
   "index.html",
   indexHtml
+);
+
+await writeOutput(
+  "404.html",
+  notFoundDocument()
 );
 
 /* ==========================================================
