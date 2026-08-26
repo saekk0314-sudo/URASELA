@@ -128,6 +128,8 @@ function pageHead({
   return `<meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0d1026">
+  <meta name="application-name" content="URASELA">
+  <meta name="apple-mobile-web-app-title" content="URASELA">
   <meta name="robots" content="${robots}">
   <meta name="description" content="${escapeHtml(description)}">
 
@@ -135,7 +137,7 @@ function pageHead({
   <meta property="og:description" content="${escapeHtml(description)}">
   <meta property="og:type" content="website">
   <meta property="og:locale" content="ja_JP">
-  <meta property="og:site_name" content="URASELA（ウラセラ）">
+  <meta property="og:site_name" content="URASELA">
   <meta property="og:url" content="${url}">
   <meta property="og:image" content="${siteUrl}/assets/generated/og-urasela.jpg">
   <meta property="og:image:width" content="1200">
