@@ -1,0 +1,123 @@
+{
+  "_about": "URASELA 事業計画PLの前提値。数値を変えたら `node company/tools/plan.mjs` で pl-plan.md / pl-plan.csv を再生成する。金額は円、率は小数。",
+  "months": ["2026-12", "2027-01", "2027-02", "2027-03", "2027-04", "2027-05", "2027-06", "2027-07", "2027-08", "2027-09", "2027-10", "2027-11", "2027-12"],
+  "common": {
+    "taxReserveRate": 0.25,
+    "_taxReserveRate": "営業利益のうち納税準備として別口座へ移す目安。本業の有無で実効税率が変わるため確定申告前に見直す",
+    "blueReturnDeduction2027": 650000,
+    "_blueReturnDeduction2027": "2027年分は複式簿記+e-Taxで65万円。優良な電子帳簿保存まで満たせば75万円（令和8年度改正）",
+    "domainCost": 2000,
+    "_domainCost": "独自ドメイン年額の目安。手元資金（納税準備を除いた累計利益）がこの額に達した月に購入（手出しゼロ原則）。広告収益は購入月＋adApprovalLagMonths以降",
+    "transferFeesPerMonth": 600,
+    "_transferFeesPerMonth": "ココナラ・note等の振込手数料の概算。売上が立った月から計上",
+    "existingToolsAllocation": 0,
+    "_existingToolsAllocation": "オーナーが既に払っているClaude・通信費の事業按分額（月額）。金額確定後に入力すれば経費化できる",
+    "growthBudgetRate": 0.05,
+    "growthBudgetStartMonth": "2027-04",
+    "_growthBudgetRate": "成長投資枠。売上の5%を上限に、売上からのみ支出（広告テスト・ツール等）。使わなければ利益に戻る"
+  },
+  "scenarios": {
+    "conservative": {
+      "label": "保守",
+      "description": "バズなし・受託の単価が上がらない場合",
+      "urasela": {
+        "sessions": [2000, 4000, 5000, 7000, 9000, 12000, 15000, 18000, 22000, 26000, 30000, 35000, 50000],
+        "completionRate": 0.35,
+        "adYenPerSession": 0.4,
+        "adStartMonth": "2027-04",
+        "adApprovalLagMonths": 2,
+        "affiliateYenPerCompletion": 0.6,
+        "affiliateStartMonth": "2027-02",
+        "paidConversion": 0.002,
+        "paidPrice": 500,
+        "paidStartMonth": "2027-04",
+        "paidFeeRate": 0.036,
+        "goods": [0, 0, 0, 2000, 3000, 3000, 4000, 4000, 5000, 5000, 6000, 6000, 10000]
+      },
+      "b2b": {
+        "projects": [0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2],
+        "avgPrice": [0, 0, 30000, 50000, 50000, 60000, 60000, 80000, 80000, 100000, 100000, 100000, 120000],
+        "platformShare": [1, 1, 1, 1, 1, 1, 1, 1, 0.8, 0.8, 0.8, 0.8, 0.8],
+        "platformFeeRate": 0.22,
+        "retainerConversion": 0.3,
+        "retainerFee": 10000,
+        "retainerChurn": 0.08
+      },
+      "media": {
+        "members": [0, 5, 10, 15, 20, 25, 30, 35, 40, 50, 60, 70, 80],
+        "memberPrice": 500,
+        "templateSales": [0, 0, 3, 3, 5, 5, 5, 8, 8, 10, 10, 10, 15],
+        "templatePrice": 1980,
+        "feeRate": 0.145
+      }
+    },
+    "base": {
+      "label": "標準",
+      "description": "計画どおり実行し、各施策が業界並みに反応した場合",
+      "urasela": {
+        "sessions": [3000, 8000, 10000, 15000, 22000, 30000, 40000, 55000, 70000, 90000, 110000, 135000, 200000],
+        "completionRate": 0.4,
+        "adYenPerSession": 0.5,
+        "adStartMonth": "2027-03",
+        "adApprovalLagMonths": 1,
+        "affiliateYenPerCompletion": 1,
+        "affiliateStartMonth": "2027-01",
+        "paidConversion": 0.004,
+        "paidPrice": 600,
+        "paidStartMonth": "2027-03",
+        "paidFeeRate": 0.036,
+        "goods": [0, 0, 3000, 5000, 6000, 8000, 10000, 10000, 12000, 15000, 15000, 20000, 30000]
+      },
+      "b2b": {
+        "projects": [0, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3],
+        "avgPrice": [0, 30000, 50000, 60000, 80000, 100000, 120000, 150000, 150000, 180000, 180000, 200000, 200000],
+        "platformShare": [1, 1, 1, 1, 1, 0.8, 0.7, 0.6, 0.5, 0.5, 0.4, 0.4, 0.4],
+        "platformFeeRate": 0.22,
+        "retainerConversion": 0.4,
+        "retainerFee": 15000,
+        "retainerChurn": 0.05
+      },
+      "media": {
+        "members": [0, 10, 20, 35, 50, 70, 90, 110, 135, 160, 185, 210, 240],
+        "memberPrice": 500,
+        "templateSales": [0, 0, 5, 10, 15, 15, 20, 20, 25, 25, 30, 30, 40],
+        "templatePrice": 1980,
+        "feeRate": 0.145
+      }
+    },
+    "aggressive": {
+      "label": "強気",
+      "description": "URASELAがSNSで話題化し、受託も単価20万円まで上がった場合",
+      "urasela": {
+        "sessions": [4000, 12000, 20000, 30000, 45000, 65000, 90000, 120000, 150000, 180000, 210000, 250000, 350000],
+        "completionRate": 0.4,
+        "adYenPerSession": 0.6,
+        "adStartMonth": "2027-02",
+        "adApprovalLagMonths": 1,
+        "affiliateYenPerCompletion": 1.2,
+        "affiliateStartMonth": "2027-01",
+        "paidConversion": 0.005,
+        "paidPrice": 600,
+        "paidStartMonth": "2027-02",
+        "paidFeeRate": 0.036,
+        "goods": [0, 2000, 5000, 8000, 10000, 15000, 20000, 25000, 30000, 35000, 40000, 45000, 60000]
+      },
+      "b2b": {
+        "projects": [0, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 4, 4],
+        "avgPrice": [0, 50000, 60000, 80000, 100000, 120000, 150000, 180000, 180000, 200000, 200000, 200000, 200000],
+        "platformShare": [1, 1, 1, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.3, 0.3, 0.3, 0.3],
+        "platformFeeRate": 0.22,
+        "retainerConversion": 0.5,
+        "retainerFee": 18000,
+        "retainerChurn": 0.04
+      },
+      "media": {
+        "members": [0, 15, 40, 70, 100, 140, 180, 230, 280, 330, 380, 430, 500],
+        "memberPrice": 500,
+        "templateSales": [0, 0, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 70],
+        "templatePrice": 1980,
+        "feeRate": 0.145
+      }
+    }
+  }
+}
