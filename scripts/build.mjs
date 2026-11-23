@@ -96,8 +96,20 @@ const adSlots = {
 
 // 有料コンテンツ・月額会員・アフィリエイト・法人窓口（未設定ならサイトに何も表示しない）
 const httpsUrlPattern = /^https:\/\/[^\s"'<>]+$/;
+// 年運の完全版（表のキーワード別）: YEAR_REPORT_URLS="1=https://...,2=https://..."（カンマか改行で区切る）
+function yearReportUrls() {
+  const urls = {};
+  const raw = String(process.env.YEAR_REPORT_URLS || "").trim();
+  for (const entry of raw.split(/[,\n]+/).map(item => item.trim()).filter(Boolean)) {
+    const match = entry.match(/^([1-9])\s*=\s*(\S+)$/);
+    if (!match || !httpsUrlPattern.test(match[2])) throw new Error("YEAR_REPORT_URLS has an invalid format");
+    urls[match[1]] = match[2];
+  }
+  return urls;
+}
 const monetization = {
   yearReportUrl: configured("YEAR_REPORT_URL", httpsUrlPattern),
+  yearReportUrls: yearReportUrls(),
   plusUrl: configured("PLUS_URL", httpsUrlPattern),
   affiliate: {
     url: configured("AFFILIATE_URL", httpsUrlPattern),

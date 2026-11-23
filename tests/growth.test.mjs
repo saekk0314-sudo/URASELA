@@ -68,10 +68,14 @@ test("リニューアル: 年運ページ・Studioページ・有料導線は設
   ]);
   assert.ok(build.includes("`${FORTUNE_YEAR}/index.html`"));
   assert.ok(build.includes('"studio/index.html"'));
-  for (const name of ["YEAR_REPORT_URL", "PLUS_URL", "AFFILIATE_URL", "STUDIO_CONTACT_URL"]) assert.ok(build.includes(name), name);
+  for (const name of ["YEAR_REPORT_URL", "YEAR_REPORT_URLS", "PLUS_URL", "AFFILIATE_URL", "STUDIO_CONTACT_URL"]) assert.ok(build.includes(name), name);
   assert.match(config, /yearReportUrl:\s*""/);
   assert.match(config, /plusUrl:\s*""/);
-  assert.match(app, /offerUrls\.yearReport && context === "year"/);
+  assert.match(config, /yearReportUrls:\s*Object\.freeze\(\{\}\)/);
+  // 完全版のリンクは、その人の表のキーワード（個人年数）の記事を優先する
+  assert.match(app, /yearReportUrlFor\(fortune\.personalYear\)/);
+  assert.match(app, /offerCards\("year", fortune\)/);
+  assert.doesNotMatch(app, /offerCards\("year"\)/);
   assert.match(app, /rel="sponsored noopener"/);
   assert.match(app, /affiliate-card__badge">PR</);
   for (const event of ["year_fortune_view", "offer_click"]) assert.ok(app.includes(`"${event}"`), event);

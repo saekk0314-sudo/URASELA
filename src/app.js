@@ -19,6 +19,11 @@ const offerUrls = {
   plus: httpsUrl(monetization.plusUrl),
   affiliate: httpsUrl(monetization.affiliate?.url)
 };
+// 年運の完全版は表のキーワード（個人年数1〜9）ごとの記事。番号ごとのURLがあればそれを、なければ共通のURLを使う
+const yearReportByNumber = Object.fromEntries(
+  Object.entries(monetization.yearReportUrls || {}).filter(([key, url]) => /^[1-9]$/.test(key) && httpsUrl(url))
+);
+const yearReportUrlFor = number => yearReportByNumber[String(number)] || offerUrls.yearReport;
 const LEVEL_CLASS = { "攻め":"peak", "追い風":"up", "整える":"steady", "休む":"rest" };
 const defaultProfile = {
   birthdate:"", gender:"回答しない", birthplace:"東京都", city:"", country:"", birthTimeKnown:false, birthtime:""
@@ -456,7 +461,7 @@ function yearSection(result) {
   try { fortune = calculateYearFortune(result.profile, { surface:result.surface, inner:result.inner }); } catch { return ""; }
   state.yearFortune = fortune;
   return `<section class="result-section year-section" id="year-fortune"><div class="result-section__title"><span>✷</span><div><small>${fortune.year} FORTUNE</small><h2>${fortune.year}年 表と裏の運勢</h2></div></div>
-    ${yearCore(fortune)}${yearActions(fortune)}${offerCards("year")}
+    ${yearCore(fortune)}${yearActions(fortune)}${offerCards("year", fortune)}
   </section>`;
 }
 
@@ -464,9 +469,11 @@ function yearTeaser() {
   return `<section class="result-section year-section year-section--teaser" id="year-fortune"><div class="result-section__title"><span>✷</span><div><small>${FORTUNE_YEAR} FORTUNE</small><h2>あなたの${FORTUNE_YEAR}年は？</h2></div></div><p class="year-lead">生年月日を入れるだけで、${FORTUNE_YEAR}年の「表のテーマ」「裏のテーマ」と勝負の月がわかります。無料・登録不要です。</p><a class="cta" href="${FORTUNE_YEAR}/" data-action="year">${FORTUNE_YEAR}年の運勢を見る →</a></section>`;
 }
 
-function offerCards(context) {
+function offerCards(context, fortune) {
   const cards = [];
-  if (offerUrls.yearReport && context === "year") cards.push(`<aside class="offer-card"><span class="offer-card__badge">有料</span><div><h3>${FORTUNE_YEAR}年 裏運勢 完全版</h3><p>月ごとの恋愛・仕事・お金と、動きどきの読み物です。</p><small>診断はこれからも無料です。完全版は任意の有料コンテンツで、内容と料金はリンク先で確認できます。</small></div><a class="cta cta--small" href="${escapeHtml(offerUrls.yearReport)}" target="_blank" rel="noopener" data-offer="year_report">完全版を読む ↗</a></aside>`);
+  const yearReport = context === "year" && fortune ? yearReportUrlFor(fortune.personalYear) : "";
+  const forKeyword = yearReport && yearReportByNumber[String(fortune.personalYear)] ? `表が「${escapeHtml(fortune.surface.keyword)}」の人へ。` : "";
+  if (yearReport) cards.push(`<aside class="offer-card"><span class="offer-card__badge">有料</span><div><h3>${FORTUNE_YEAR}年 表と裏の運勢 完全版</h3><p>${forKeyword}12ヶ月の恋愛・仕事・お金、勝負の月と休む月の使い方、本命星別の裏のテーマを読み物にしました。</p><small>診断はこれからも無料です。完全版は任意の有料コンテンツで、内容と料金はリンク先で確認できます。</small></div><a class="cta cta--small" href="${escapeHtml(yearReport)}" target="_blank" rel="noopener" data-offer="year_report">完全版を読む ↗</a></aside>`);
   if (offerUrls.plus) cards.push(`<aside class="offer-card offer-card--plus"><span class="offer-card__badge">月額</span><div><h3>URASELA PLUS</h3><p>毎月の「表と裏の運勢」と、相性の読み物が届く会員プラン。</p><small>料金・解約方法はリンク先に記載しています。</small></div><a class="cta cta--small" href="${escapeHtml(offerUrls.plus)}" target="_blank" rel="noopener" data-offer="plus">PLUSを見る ↗</a></aside>`);
   return cards.length ? `<div class="offer-list">${cards.join("")}</div>` : "";
 }
@@ -497,7 +504,7 @@ function renderYearPage() {
   }
   state.yearFortune = fortune;
   const resultBlock = fortune ? `<div class="result-body year-body">
-      <section class="result-section year-section" id="year-fortune"><div class="result-section__title"><span>✷</span><div><small>${fortune.personalized ? "WITH YOUR URASELA" : "BY BIRTHDATE"}</small><h2>あなたの${FORTUNE_YEAR}年</h2></div></div>${yearCore(fortune)}${yearActions(fortune)}${offerCards("year")}</section>
+      <section class="result-section year-section" id="year-fortune"><div class="result-section__title"><span>✷</span><div><small>${fortune.personalized ? "WITH YOUR URASELA" : "BY BIRTHDATE"}</small><h2>あなたの${FORTUNE_YEAR}年</h2></div></div>${yearCore(fortune)}${yearActions(fortune)}${offerCards("year", fortune)}</section>
       ${fortune.personalized ? "" : `<section class="result-next"><h2>表キャラ×裏キャラも重ねて読む</h2><p>約3分の無料診断で、あなたの表と裏のキャラクターを${FORTUNE_YEAR}年の運勢に掛け合わせます。</p><button class="cta" data-action="start">無料で診断する →</button></section>`}
     </div>` : `<div class="result-body year-body"><section class="result-section year-explain"><div class="result-section__title"><span>?</span><div><small>HOW IT WORKS</small><h2>${FORTUNE_YEAR}年の運勢の読み方</h2></div></div><div class="life-grid"><article><span>表</span><h3>表のテーマ</h3><p>数秘術の個人年数から、外に見せる行動のテーマを読みます。</p></article><article><span>裏</span><h3>裏のテーマ</h3><p>九星気学の${FORTUNE_YEAR}年の年盤（九紫火星が中心）で、あなたの本命星が入る場所から心の奥の流れを読みます。</p></article><article><span>月</span><h3>月ごとのリズム</h3><p>1年を「攻め・追い風・整える・休む」の4つで色分けし、勝負の月を出します。</p></article></div></section></div>`;
   const content = `<section class="year-hero"><div class="year-hero__glow" aria-hidden="true"></div><p class="section-kicker">${FORTUNE_YEAR} FORTUNE</p><h1>${FORTUNE_YEAR}年の<br><strong>表と裏</strong>の運勢</h1><p class="year-hero__lead">九紫火星が中心にめぐる${FORTUNE_YEAR}年。あなたの表のテーマ、裏のテーマ、そして勝負の月を読みます。</p>
