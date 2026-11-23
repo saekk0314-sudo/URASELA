@@ -23,6 +23,12 @@ for (let m = 1; m <= 12; m++) {
 }
 const banned = ["必ず", "絶対", "確実", "保証", "不幸", "災い", "厄", "投資す"];
 for (const w of banned) if (text.includes(w)) errors.push(`注意語「${w}」を含む: ${text.slice(Math.max(0, text.indexOf(w) - 20), text.indexOf(w) + 20).replace(/\n/g, " ")}`);
+// 法務チェック（2026-11-24）で決めた注意書き。購入前に見える部分（有料ラインより上）に置く
+const PAIDLINE_MARK = "<!-- ここに note の有料ライン -->";
+const freePart = text.split(PAIDLINE_MARK)[0];
+if (!text.includes(PAIDLINE_MARK)) errors.push("有料ラインの印がない");
+for (const w of ["娯楽と自己理解のための参考情報", "AIを活用して作成しています", "保護者の方の同意", "キャンセル・返金はできません"]) if (!freePart.includes(w)) errors.push(`購入前の注意書き「${w}」が有料ラインより上にない`);
+if (!text.includes("専門家の助言を優先")) errors.push("3章末の注意書き「専門家の助言を優先」がない");
 const out = file.replace(/\.md$/, ".full.md");
 writeFileSync(out, text);
 const [free, paid] = text.split("<!-- ここに note の有料ライン -->");
