@@ -1,6 +1,7 @@
 import { cp, mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { CHARACTERS, FAQ, FORTUNE_METHODS } from "../src/data.js";
+import { FORTUNE_YEAR } from "../src/engine.js";
 import { LEGAL_PAGES } from "./content.mjs";
 
 const root = resolve(import.meta.dirname, "..");
@@ -92,6 +93,22 @@ const adSlots = {
     /^\d+$/
   )
 };
+
+// 有料コンテンツ・月額会員・アフィリエイト・法人窓口（未設定ならサイトに何も表示しない）
+const httpsUrlPattern = /^https:\/\/[^\s"'<>]+$/;
+const monetization = {
+  yearReportUrl: configured("YEAR_REPORT_URL", httpsUrlPattern),
+  plusUrl: configured("PLUS_URL", httpsUrlPattern),
+  affiliate: {
+    url: configured("AFFILIATE_URL", httpsUrlPattern),
+    title: configured("AFFILIATE_TITLE", /^[^<>"]{1,80}$/),
+    text: configured("AFFILIATE_TEXT", /^[^<>"]{1,160}$/)
+  }
+};
+const studioContactUrl = configured(
+  "STUDIO_CONTACT_URL",
+  /^(https:\/\/[^\s"'<>]+|mailto:[^\s"'<>]+)$/
+);
 
 const escapeHtml = value =>
   String(value ?? "").replace(/[&<>"']/g, character => ({
@@ -188,6 +205,8 @@ function staticFooter() {
     </div>
 
     <nav aria-label="フッターナビゲーション">
+      <a href="${FORTUNE_YEAR}/">${FORTUNE_YEAR}年の運勢</a>
+      <a href="studio/">法人・クリエイターの方へ</a>
       <a href="about/">URASELAについて</a>
       <a href="privacy/">プライバシーポリシー</a>
       <a href="disclaimer/">免責事項</a>
@@ -231,8 +250,10 @@ function homeFooter() {
       <a href="./">TOP</a>
       <a href="characters/">キャラ一覧</a>
       <a href="compatibility/">相性チェック</a>
+      <a href="${FORTUNE_YEAR}/">${FORTUNE_YEAR}年の運勢</a>
       <a href="#flow">診断の流れ</a>
       <a href="#faq">よくある質問</a>
+      <a href="studio/">法人・クリエイターの方へ</a>
       <a href="about/">URASELAについて</a>
       <a href="privacy/">プライバシーポリシー</a>
       <a href="disclaimer/">免責事項</a>
@@ -271,6 +292,14 @@ function homeMarkup() {
       </div>
       <div class="hero__label hero__label--surface"><b>表キャラ</b><span>外に見せるあなた</span></div>
       <div class="hero__label hero__label--inner"><b>裏キャラ</b><span>心の奥にいるあなた</span></div>
+    </section>
+    <section class="season-banner" aria-labelledby="season-title">
+      <div class="season-banner__body">
+        <p class="section-kicker">NEW ・ ${FORTUNE_YEAR} FORTUNE</p>
+        <h2 id="season-title">${FORTUNE_YEAR}年の「表と裏の運勢」</h2>
+        <p>生年月日だけで、あなたの${FORTUNE_YEAR}年のテーマと勝負の月がわかる。診断済みなら、表キャラ×裏キャラも重ねて読みます。</p>
+      </div>
+      <a class="cta" href="${FORTUNE_YEAR}/">${FORTUNE_YEAR}年の運勢を見る <span>→</span></a>
     </section>
     <section class="section methods" aria-labelledby="methods-title">
       <p class="section-kicker">WHY URASELA</p>
@@ -328,7 +357,7 @@ function homeMarkup() {
         <a href="./">TOP</a>
         <a href="characters/">キャラ一覧</a>
         <a href="compatibility/">相性チェック</a>
-        <a href="#flow">診断の流れ</a>
+        <a class="nav-season" href="${FORTUNE_YEAR}/">${FORTUNE_YEAR}年運勢<i>NEW</i></a>
         <a href="#faq">よくある質問</a>
         <button class="nav-cta" data-action="start">今すぐ無料で診断する</button>
       </nav>
@@ -339,7 +368,7 @@ function homeMarkup() {
       <a href="characters/"><span>▤</span>キャラ</a>
       <button class="mobile-nav__main" data-action="start"><span>◇</span>診断</button>
       <a href="compatibility/"><span>♡</span>相性</a>
-      <a href="#faq"><span>?</span>FAQ</a>
+      <a href="${FORTUNE_YEAR}/"><span>✷</span>${FORTUNE_YEAR}</a>
     </nav>
   </div>`;
 }
@@ -819,7 +848,7 @@ function legalDocument(page) {
       }
 
       <p class="legal-updated">
-        制定・最終更新：2026年8月23日
+        制定・最終更新：${escapeHtml(page.updated || "2026年8月23日")}
       </p>
 
     </main>
@@ -863,6 +892,150 @@ ${pageHead({
 
 ${content}
 
+</body>
+</html>`;
+}
+
+function yearDocument() {
+  const title = `${FORTUNE_YEAR}年の運勢｜表と裏で読む無料占い｜URASELA（ウラセラ）`;
+  const description =
+    `生年月日を入れるだけで、${FORTUNE_YEAR}年の表のテーマ・裏のテーマ・月ごとのリズム・勝負の月がわかる無料占い。` +
+    "数秘術と九星気学で読み、診断済みなら表キャラ×裏キャラも掛け合わせます。";
+  const content = `
+  <div class="site site--dark">
+    <header class="site-header">${brandLink()}</header>
+    <main id="main">
+      <section class="year-hero">
+        <p class="section-kicker">${FORTUNE_YEAR} FORTUNE</p>
+        <h1>${FORTUNE_YEAR}年の<br><strong>表と裏</strong>の運勢</h1>
+        <p class="year-hero__lead">九紫火星が中心にめぐる${FORTUNE_YEAR}年。あなたの表のテーマ、裏のテーマ、そして勝負の月を読みます。</p>
+        <a class="cta" href="${FORTUNE_YEAR}/">${FORTUNE_YEAR}年の運勢を見る →</a>
+      </section>
+    </main>
+    ${staticFooter()}
+  </div>`;
+  return appDocument({
+    title,
+    description,
+    path: String(FORTUNE_YEAR),
+    base: "../",
+    content,
+    schema: {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      name: `URASELA ${FORTUNE_YEAR}年の表と裏の運勢`,
+      url: canonical(String(FORTUNE_YEAR)),
+      applicationCategory: "LifestyleApplication",
+      operatingSystem: "Any",
+      isAccessibleForFree: true,
+      description
+    }
+  });
+}
+
+const STUDIO_PLANS = [
+  ["モニター（先着3件）", "30,000円", "ライト相当。完成した診断を制作事例として紹介させていただくことが条件です", "7日"],
+  ["ライト", "50,000円", "8タイプ・質問10問前後・テンプレートデザイン・結果のシェア画像", "7日"],
+  ["スタンダード", "150,000円", "16タイプ・オリジナルの質問とキャラクター設計・オリジナルデザイン・シェア画像・計測設定", "14日"],
+  ["プレミアム", "300,000円〜", "占術ロジック・世界観設計・キャンペーン設計・LINE登録への導線・相性診断", "21日"],
+  ["保守運用", "月20,000円", "設置先の管理・月次の数字レポート・軽微な文言修正・季節の更新", "毎月"]
+];
+
+function studioDocument() {
+  const title = "診断コンテンツ制作 URASELA Studio｜法人・クリエイターの方へ";
+  const description =
+    "URASELAの診断エンジンで、お店・ブランド・活動専用のオリジナル診断コンテンツを制作します。" +
+    "16タイプ診断・結果のシェア画像・計測まで。料金はライト5万円から、最短7日で公開。";
+  const contactHref = studioContactUrl || "contact/";
+  const contactAttrs = studioContactUrl.startsWith("https://") ? ' target="_blank" rel="noopener"' : "";
+  const content = `
+  <div class="site site--dark">
+    <header class="site-header">
+      ${brandLink()}
+      <nav class="desktop-nav">
+        <a href="characters/">キャラ一覧</a>
+        <a href="${FORTUNE_YEAR}/">${FORTUNE_YEAR}年の運勢</a>
+        <a class="nav-cta" href="${escapeHtml(contactHref)}"${contactAttrs}>制作を相談する</a>
+      </nav>
+    </header>
+    <main id="main" class="studio-page">
+      <section class="studio-hero">
+        <p class="section-kicker">URASELA STUDIO</p>
+        <h1>シェアしたくなる診断を、<br><strong>最短7日で。</strong></h1>
+        <p class="studio-lead">5つの占術と24問で256通りを出す自己分析アプリ「URASELA」を自社で開発・運営しています。その仕組みで、あなたのお店・ブランド・活動専用の診断コンテンツを作ります。</p>
+        <a class="cta" href="${escapeHtml(contactHref)}"${contactAttrs}>制作を相談する →</a>
+      </section>
+      <section class="studio-section">
+        <h2>こんな方へ</h2>
+        <div class="studio-grid">
+          <article><h3>占い師・カウンセラー</h3><p>無料診断から、LINE登録や鑑定の予約へ自然につなげたい。</p></article>
+          <article><h3>サロン・店舗</h3><p>「あなたに合うメニュー」がわかる診断で、来店前の迷いをなくしたい。</p></article>
+          <article><h3>VTuber・配信者</h3><p>ファンと盛り上がれる「推しとの相性診断」を企画したい。</p></article>
+          <article><h3>企業の採用・販促</h3><p>社風との相性や商品タイプの診断で、話題と接点をつくりたい。</p></article>
+        </div>
+      </section>
+      <section class="studio-section">
+        <h2>料金</h2>
+        <div class="studio-plans">
+          ${STUDIO_PLANS.map(([name, price, body, term]) => `
+          <article class="studio-plan">
+            <h3>${escapeHtml(name)}</h3>
+            <b>${escapeHtml(price)}</b>
+            <p>${escapeHtml(body)}</p>
+            <small>納期・期間 ${escapeHtml(term)}</small>
+          </article>`).join("")}
+        </div>
+        <p class="studio-note">価格は税込・総額です。イラストはお客様のご支給、または人のイラストレーターへの外注（実費）で対応します。</p>
+      </section>
+      <section class="studio-section">
+        <h2>進め方</h2>
+        <ol class="studio-steps">
+          <li><b>ヒアリング</b><span>目的・対象・公開日をシートでうかがいます（10分ほど）。</span></li>
+          <li><b>企画のご提案</b><span>タイプの設計・質問の切り口・結果の見せ方をご提案します。</span></li>
+          <li><b>制作</b><span>質問・結果文・デザイン・シェア画像・計測を制作します。</span></li>
+          <li><b>確認・修正</b><span>プランに応じた回数まで修正します。</span></li>
+          <li><b>公開・納品</b><span>お客様のサイトへの設置、または設置代行で公開します。</span></li>
+        </ol>
+      </section>
+      <section class="studio-section studio-honest">
+        <h2>あらかじめお伝えしていること</h2>
+        <ul>
+          <li>企画・文章・プログラムの制作にAIを活用しています。そのぶん価格を抑え、納期を短くしています。</li>
+          <li>拡散数・登録数・売上などの成果は保証できません。</li>
+          <li>実在の人物・他社のキャラクターを使った診断、医療・投資など専門的な判断をうたう診断はお受けできません。</li>
+        </ul>
+      </section>
+      <section class="final-cta">
+        <p>あなたの診断を、話題の入口に。</p>
+        <h2>まずは気軽にご相談ください。</h2>
+        <a class="cta" href="${escapeHtml(contactHref)}"${contactAttrs}>制作を相談する →</a>
+      </section>
+    </main>
+    ${staticFooter()}
+  </div>`;
+  return `<!doctype html>
+<html lang="ja">
+<head>
+${pageHead({
+  title,
+  description,
+  path: "studio",
+  base: "../",
+  schema: {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    name: "URASELA Studio 診断コンテンツ制作",
+    serviceType: "診断コンテンツ制作",
+    provider: { "@type": "Organization", name: "URASELA", url: canonical("") },
+    areaServed: "JP",
+    url: canonical("studio"),
+    description
+  }
+})}
+</head>
+<body>
+<a class="skip-link" href="#main">本文へ移動</a>
+${content}
 </body>
 </html>`;
 }
@@ -932,7 +1105,8 @@ const runtimeConfig = {
   gaMeasurementId,
   adsenseClientId,
   adsensePublisherId,
-  adSlots
+  adSlots,
+  monetization
 };
 
 await writeOutput(
@@ -1006,6 +1180,20 @@ for (const character of CHARACTERS) {
 await writeOutput(
   "compatibility/index.html",
   compatibilityDocument()
+);
+
+/* ==========================================================
+   YEAR FORTUNE / STUDIO
+========================================================== */
+
+await writeOutput(
+  `${FORTUNE_YEAR}/index.html`,
+  yearDocument()
+);
+
+await writeOutput(
+  "studio/index.html",
+  studioDocument()
 );
 
 /* ==========================================================

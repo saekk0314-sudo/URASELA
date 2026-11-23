@@ -3,8 +3,8 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import {
   allCombinations, analyzeProfile, buildCombination, calculateAstrology, calculateCompatibility,
-  calculateKyusei, calculateNumerology, calculateShichu, decodeSharedResult, encodeSharedResult,
-  shuffleTarot, tarotTraitScores
+  calculateKyusei, calculateNumerology, calculateShichu, calculateYearFortune, decodeSharedResult, encodeSharedResult,
+  FORTUNE_YEAR, shuffleTarot, tarotTraitScores
 } from "../src/engine.js";
 import { CHARACTERS, QUESTIONS, TAROT } from "../src/data.js";
 
@@ -135,4 +135,34 @@ test("共有コードに個人情報を含めず結果を復元できる", () =>
 test("表示ソースに禁止された unavailable を含まない", async () => {
   const sources=await Promise.all(["../src/app.js","../src/data.js","../src/engine.js"].map(path=>readFile(new URL(path,import.meta.url),"utf8")));
   assert.ok(sources.every(source=>!source.toLowerCase().includes("unavailable")));
+});
+
+test("2027年の年運は個人年数と九星の宮から表裏のテーマと12ヶ月のリズムを返す", () => {
+  const profile = { birthdate:"1995-06-15", gender:"回答しない", birthplace:"東京都", city:"", country:"", birthTimeKnown:false, birthtime:"" };
+  const fortune = calculateYearFortune(profile, { surface:CHARACTERS[8], inner:CHARACTERS[11] });
+  assert.equal(FORTUNE_YEAR, 2027);
+  assert.equal(fortune.year, 2027);
+  assert.equal(fortune.personalYear, 5);
+  assert.equal(fortune.mainStar, "五黄土星");
+  assert.equal(fortune.annualStar, "九紫火星");
+  assert.equal(fortune.palace, "坎宮");
+  assert.equal(fortune.months.length, 12);
+  assert.ok(fortune.months.every(item => ["攻め","追い風","整える","休む"].includes(item.level) && item.note));
+  assert.deepEqual(fortune.peakMonths, [3,5,12]);
+  assert.deepEqual(fortune.restMonths, [2,4,11]);
+  assert.equal(fortune.personalized, true);
+  assert.match(fortune.surface.text, /静かな観測者/);
+  assert.match(fortune.inner.text, /沼る職人/);
+  assert.match(fortune.shareCopy, /#2027年の裏運勢/);
+  assert.ok(!fortune.shareCopy.includes("1995"));
+});
+
+test("診断前でも生年月日だけで年運を出し、生年月日が無ければ止める", () => {
+  const fortune = calculateYearFortune({ birthdate:"2000-02-24" });
+  assert.equal(fortune.personalized, false);
+  assert.equal(fortune.surface.keyword, "はじめる");
+  assert.equal(fortune.inner.keyword, "選び直す");
+  assert.deepEqual(fortune.peakMonths, [7,9]);
+  assert.equal(fortune.caution, "");
+  assert.throws(() => calculateYearFortune({}), /生年月日/);
 });

@@ -61,3 +61,28 @@ test("ビルドはSEOファイルとキャラ個別ページを実ファイル�
   assert.match(build, /homeMarkup\(\)/);
   assert.match(build, /noindex,follow/);
 });
+
+test("リニューアル: 年運ページ・Studioページ・有料導線は設定があるときだけ表示する", async () => {
+  const [build, app, config, sitemap] = await Promise.all([
+    source("../scripts/build.mjs"), source("../src/app.js"), source("../config.js"), source("../sitemap.xml")
+  ]);
+  assert.ok(build.includes("`${FORTUNE_YEAR}/index.html`"));
+  assert.ok(build.includes('"studio/index.html"'));
+  for (const name of ["YEAR_REPORT_URL", "PLUS_URL", "AFFILIATE_URL", "STUDIO_CONTACT_URL"]) assert.ok(build.includes(name), name);
+  assert.match(config, /yearReportUrl:\s*""/);
+  assert.match(config, /plusUrl:\s*""/);
+  assert.match(app, /offerUrls\.yearReport && context === "year"/);
+  assert.match(app, /rel="sponsored noopener"/);
+  assert.match(app, /affiliate-card__badge">PR</);
+  for (const event of ["year_fortune_view", "offer_click"]) assert.ok(app.includes(`"${event}"`), event);
+  assert.match(sitemap, /\/2027\//);
+  assert.match(sitemap, /\/studio\//);
+});
+
+test("料金の方針: 診断は無料のまま、有料コンテンツは任意と明記する", () => {
+  const about = LEGAL_PAGES.find(page => page.slug === "about");
+  const text = JSON.stringify(about);
+  assert.match(text, /これからも無料/);
+  assert.match(text, /任意の有料コンテンツ/);
+  assert.match(text, /「広告」「PR」/);
+});
