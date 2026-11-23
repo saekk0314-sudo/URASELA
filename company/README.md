@@ -31,7 +31,7 @@
 
 | 区分 | 文書 |
 | --- | --- |
-| オーナー向け | [オーナーの仕事](owner/guide.md) ・ [承認キュー](owner/approvals.md) ・ [決裁ログ](owner/decision-log.md) |
+| オーナー向け | [オーナーの仕事](owner/guide.md) ・ [承認キュー](owner/approvals.md) ・ [決裁ログ](owner/decision-log.md) ・ [開業届の下書き](owner/kaigyo-draft.md) |
 | 報告 | [計画改定報告（v2・年商5000万円）](reports/2026-11-23-plan-v2.md) ・ [CEO就任報告（v1）](reports/2026-11-23-ceo-inauguration.md) |
 | 戦略 | [CEOの思考法](strategy/ceo-thinking.md) ・ [事業計画書](strategy/business-plan.md) ・ [ロードマップ](strategy/roadmap.md) ・ [KPI設計](strategy/kpi.md) |
 | 財務・経理 | [PL計画](finance/pl-plan.md) ・ [経理規程](finance/accounting-policy.md) ・ [税務カレンダー](finance/tax-calendar.md) ・ [法人化計画](finance/incorporation.md) ・ [勘定科目](finance/accounts.json) ・ [請求書テンプレ](finance/templates/invoice-template.md) |
