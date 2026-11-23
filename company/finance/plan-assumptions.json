@@ -13,7 +13,7 @@
     "transferFeesPerMonth": 600,
     "_transferFeesPerMonth": "ココナラ・note等の振込手数料の概算。売上が立った月から計上",
     "existingToolsAllocation": 0,
-    "_existingToolsAllocation": "オーナーが既に払っているClaude・通信費の事業按分額（月額）。金額確定後に入力すれば経費化できる",
+    "_existingToolsAllocation": "オーナーの Claude Max（月$100、他の事業と共用、A-019）と通信費のうちURASELAの負担分（月額）。売上が立った月から利用割合（Q-009）で負担する。割合の回答後に入力する",
     "growthBudgetRate": 0.05,
     "growthBudgetStartMonth": "2027-04",
     "_growthBudgetRate": "広告・成長投資の上限（売上比）。売上からのみ支出し、使わなければ利益に戻る。シナリオ側の costs で上書きできる"
