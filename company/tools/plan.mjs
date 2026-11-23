@@ -50,7 +50,7 @@ export const COST_LINES = [
   ["fixedTools", "ツール・専門家費用"],
   ["transfer", "振込手数料等"],
   ["domain", "独自ドメイン"],
-  ["tools", "既存ツール按分"],
+  ["tools", "Claude（Max）のURASELA負担分"],
   ["oneTime", "一時費用（法人設立など）"],
   ["growth", "広告・成長投資"]
 ];
@@ -127,6 +127,7 @@ export function simulate(months, common, scenario) {
   let cumulativeProfit = 0;
   let cumulativeCash = 0;
   let domainIndex = -1;
+  let toolsStarted = false;
 
   return months.map((month, i) => {
     const sessions = u.sessions[i];
@@ -139,6 +140,8 @@ export function simulate(months, common, scenario) {
       domain = common.domainCost;
     }
     const adsLive = domainIndex >= 0 && i >= domainIndex + u.adApprovalLagMonths && month >= u.adStartMonth;
+    // Claude などの共用ツールの負担も、URASELAの手元資金で払えるようになった月から始める
+    if (!toolsStarted && common.existingToolsAllocation > 0 && cumulativeCash >= common.existingToolsAllocation) toolsStarted = true;
 
     // 保守契約: 前月納品分の一部が月額契約へ移行し、毎月一定率が解約する
     retainers = retainers * (1 - b.retainerChurn) + previousProjects * b.retainerConversion;
@@ -174,7 +177,7 @@ export function simulate(months, common, scenario) {
       fixedTools: at(costs.fixedMonthly, i),
       transfer: revenueTotal > 0 ? common.transferFeesPerMonth : 0,
       domain,
-      tools: common.existingToolsAllocation,
+      tools: toolsStarted ? common.existingToolsAllocation : 0,
       oneTime: costs.oneTime?.[month] ?? 0,
       growth: month >= growthStart ? revenueTotal * growthRate : 0
     });

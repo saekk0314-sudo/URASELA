@@ -12,8 +12,8 @@
     "_domainCost": "独自ドメイン年額の目安。手元資金（納税準備を除いた累計利益）がこの額に達した月に購入（手出しゼロ原則）。広告収益は購入月＋adApprovalLagMonths以降",
     "transferFeesPerMonth": 600,
     "_transferFeesPerMonth": "ココナラ・note等の振込手数料の概算。売上が立った月から計上",
-    "existingToolsAllocation": 0,
-    "_existingToolsAllocation": "オーナーの Claude Max（月$100、他の事業と共用、A-019）と通信費のうちURASELAの負担分（月額）。売上が立った月から利用割合（Q-009）で負担する。割合の回答後に入力する",
+    "existingToolsAllocation": 12000,
+    "_existingToolsAllocation": "オーナーの Claude Max（月$100・約1.5万円、A-019）のうちURASELAの負担分（月額）。利用はほぼURASELA（Q-009）なので目安8割。URASELAの手元資金で払えるようになった月から負担する（手出しゼロ）。実際の円建て金額で見直す",
     "growthBudgetRate": 0.05,
     "growthBudgetStartMonth": "2027-04",
     "_growthBudgetRate": "広告・成長投資の上限（売上比）。売上からのみ支出し、使わなければ利益に戻る。シナリオ側の costs で上書きできる"
