@@ -198,4 +198,6 @@ https://urasela.pages.dev
 
 ## 9. 終わったら
 
+ココナラの出品が公開されたら、その出品ページのURLも送ってください（サイトの「制作を相談する」ボタンをそこへつなぎます。A-024）。
+
 決まったIDを一言で送ってください（例: `X社長=ai_shacho_zero X公式=urasela_app note=urasela ココナラ=URASELA_Studio`）。投稿の予約文面と、noteへの記事の貼り方はCEOが用意します。
