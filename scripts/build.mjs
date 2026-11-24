@@ -354,7 +354,7 @@ function homeMarkup() {
           <span class="sample-pair__x">×</span>
           <article>${portrait(sampleB)}<small>裏キャラ</small><h3>${escapeHtml(sampleB.name)}</h3><p>${escapeHtml(sampleB.catch)}</p></article>
         </div>
-        <article class="sample-score"><small>TYPE 01 × TYPE 02</small><p>総合運勢</p><b>87<em>%</em></b><div><span style="--value:90%">恋愛運</span><span style="--value:82%">仕事運</span><span style="--value:85%">人間関係</span></div></article>
+        <article class="sample-score"><small>TYPE 01 × TYPE 02</small><p>あなたの読み解き</p><b>表<em>と</em>裏</b><p class="sample-score__topics">恋愛・仕事・お金・人間関係まで読み解く</p></article>
         <article class="sample-compat"><h3>あの人との相性もチェック！</h3><p>恋愛・友達・仕事。表と裏の4つの視点から2人を分析。</p><a class="cta cta--small" href="compatibility/">相性チェックへ →</a><span aria-hidden="true">♡</span></article>
       </div>
     </section>
@@ -975,9 +975,12 @@ function studioDocument() {
   const title = "診断コンテンツ制作 URASELA Studio｜法人・クリエイターの方へ";
   const description =
     "URASELAの診断エンジンで、お店・ブランド・活動専用のオリジナル診断コンテンツを制作します。" +
-    "16タイプ診断・結果のシェア画像・計測まで。料金はライト5万円から、最短7日で公開。";
-  const contactHref = studioContactUrl || "contact/";
+    "8タイプ診断とシェア画像はライト5万円から、最短7日で公開。16タイプ・計測つきのプランもあります。";
+  // 相談の窓口（STUDIO_CONTACT_URL）が決まるまでは、公開の掲示板などへ誘導せず「準備中」と表示する
   const contactAttrs = studioContactUrl.startsWith("https://") ? ' target="_blank" rel="noopener"' : "";
+  const contactButton = (className, label) => studioContactUrl
+    ? `<a class="${className}" href="${escapeHtml(studioContactUrl)}"${contactAttrs}>${label}</a>`
+    : `<span class="${className} studio-contact-pending" aria-disabled="true">ご相談の受付は準備中です</span>`;
   const content = `
   <div class="site site--dark">
     <header class="site-header">
@@ -985,23 +988,23 @@ function studioDocument() {
       <nav class="desktop-nav">
         <a href="characters/">キャラ一覧</a>
         <a href="${FORTUNE_YEAR}/">${FORTUNE_YEAR}年の運勢</a>
-        <a class="nav-cta" href="${escapeHtml(contactHref)}"${contactAttrs}>制作を相談する</a>
+        ${studioContactUrl ? contactButton("nav-cta", "制作を相談する") : ""}
       </nav>
     </header>
     <main id="main" class="studio-page">
       <section class="studio-hero">
         <p class="section-kicker">URASELA STUDIO</p>
         <h1>シェアしたくなる診断を、<br><strong>最短7日で。</strong></h1>
-        <p class="studio-lead">5つの占術と24問で256通りを出す自己分析アプリ「URASELA」を自社で開発・運営しています。その仕組みで、あなたのお店・ブランド・活動専用の診断コンテンツを作ります。</p>
-        <a class="cta" href="${escapeHtml(contactHref)}"${contactAttrs}>制作を相談する →</a>
+        <p class="studio-lead">5つの占術と24問で256通りを出す自己分析アプリ「URASELA」を、KYOVEL（個人事業）がAIを活用して開発・運営しています。その仕組みで、あなたのお店・ブランド・活動専用の診断コンテンツを作ります。</p>
+        ${contactButton("cta", "制作を相談する →")}
       </section>
       <section class="studio-section">
         <h2>こんな方へ</h2>
         <div class="studio-grid">
           <article><h3>占い師・カウンセラー</h3><p>無料診断から、LINE登録や鑑定の予約へ自然につなげたい。</p></article>
           <article><h3>サロン・店舗</h3><p>「あなたに合うメニュー」がわかる診断で、来店前の迷いをなくしたい。</p></article>
-          <article><h3>VTuber・配信者</h3><p>ファンと盛り上がれる「推しとの相性診断」を企画したい。</p></article>
-          <article><h3>企業の採用・販促</h3><p>社風との相性や商品タイプの診断で、話題と接点をつくりたい。</p></article>
+          <article><h3>VTuber・配信者</h3><p>ご本人の公式企画として、ファンと盛り上がれる「推しとの相性診断」を作りたい。</p></article>
+          <article><h3>企業の採用広報・販促</h3><p>社風との相性や商品タイプの診断で、話題と接点をつくりたい。</p></article>
         </div>
       </section>
       <section class="studio-section">
@@ -1015,7 +1018,7 @@ function studioDocument() {
             <small>納期・期間 ${escapeHtml(term)}</small>
           </article>`).join("")}
         </div>
-        <p class="studio-note">価格は税込・総額です。イラストはお客様のご支給、または人のイラストレーターへの外注（実費）で対応します。</p>
+        <p class="studio-note">表示価格はお支払いの総額です（適格請求書は発行していません）。納期はヒアリングシート受領からの目安です。イラストはお客様のご支給、または人のイラストレーターへの外注（実費）で対応します。</p>
       </section>
       <section class="studio-section">
         <h2>進め方</h2>
@@ -1032,13 +1035,13 @@ function studioDocument() {
         <ul>
           <li>企画・文章・プログラムの制作にAIを活用しています。そのぶん価格を抑え、納期を短くしています。</li>
           <li>拡散数・登録数・売上などの成果は保証できません。</li>
-          <li>実在の人物・他社のキャラクターを使った診断、医療・投資など専門的な判断をうたう診断はお受けできません。</li>
+          <li>実在の人物・キャラクターを使う診断は、ご本人または権利者（所属事務所など）からのご依頼に限ります。不安をあおって鑑定や開運グッズの購入に誘う診断、採用選考の合否に使う診断、医療・投資など専門的な判断をうたう診断はお受けできません。</li>
         </ul>
       </section>
       <section class="final-cta">
         <p>あなたの診断を、話題の入口に。</p>
         <h2>まずは気軽にご相談ください。</h2>
-        <a class="cta" href="${escapeHtml(contactHref)}"${contactAttrs}>制作を相談する →</a>
+        ${contactButton("cta", "制作を相談する →")}
       </section>
     </main>
     ${staticFooter()}

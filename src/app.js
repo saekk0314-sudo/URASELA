@@ -216,7 +216,7 @@ function renderHome() {
           <span class="sample-pair__x">×</span>
           <article>${characterPortrait(sampleB)}<small>裏キャラ</small><h3>${sampleB.name}</h3><p>${sampleB.catch}</p></article>
         </div>
-        <article class="sample-score"><small>TYPE 01 × TYPE 02</small><p>総合運勢</p><b>87<em>%</em></b><div><span style="--value:90%">恋愛運</span><span style="--value:82%">仕事運</span><span style="--value:85%">人間関係</span></div></article>
+        <article class="sample-score"><small>TYPE 01 × TYPE 02</small><p>あなたの読み解き</p><b>表<em>と</em>裏</b><p class="sample-score__topics">恋愛・仕事・お金・人間関係まで読み解く</p></article>
         <article class="sample-compat"><h3>あの人との相性もチェック！</h3><p>恋愛・友達・仕事。表と裏の4つの視点から2人を分析。</p><button class="cta cta--small" data-action="compatibility">相性チェックへ →</button><span aria-hidden="true">♡</span></article>
       </div>
     </section>
@@ -473,8 +473,8 @@ function offerCards(context, fortune) {
   const cards = [];
   const yearReport = context === "year" && fortune ? yearReportUrlFor(fortune.personalYear) : "";
   const forKeyword = yearReport && yearReportByNumber[String(fortune.personalYear)] ? `表が「${escapeHtml(fortune.surface.keyword)}」の人へ。` : "";
-  if (yearReport) cards.push(`<aside class="offer-card"><span class="offer-card__badge">有料</span><div><h3>${FORTUNE_YEAR}年 表と裏の運勢 完全版</h3><p>${forKeyword}12ヶ月の恋愛・仕事・お金、勝負の月と休む月の使い方、本命星別の裏のテーマを読み物にしました。</p><small>診断はこれからも無料です。完全版は任意の有料コンテンツで、内容と料金はリンク先で確認できます。</small></div><a class="cta cta--small" href="${escapeHtml(yearReport)}" target="_blank" rel="noopener" data-offer="year_report">完全版を読む ↗</a></aside>`);
-  if (offerUrls.plus) cards.push(`<aside class="offer-card offer-card--plus"><span class="offer-card__badge">月額</span><div><h3>URASELA PLUS</h3><p>毎月の「表と裏の運勢」と、相性の読み物が届く会員プラン。</p><small>料金・解約方法はリンク先に記載しています。</small></div><a class="cta cta--small" href="${escapeHtml(offerUrls.plus)}" target="_blank" rel="noopener" data-offer="plus">PLUSを見る ↗</a></aside>`);
+  if (yearReport) cards.push(`<aside class="offer-card"><span class="offer-card__badge">有料</span><div><h3>${FORTUNE_YEAR}年 表と裏の運勢 完全版</h3><p>${forKeyword}12ヶ月の恋愛・仕事・お金、勝負の月と休む月の使い方、本命星別の裏のテーマを読み物にしました。</p><small>診断はこれからも無料です。完全版は任意の有料コンテンツで、内容と料金はリンク先で確認できます。未成年の方は、保護者の方の同意を得てからご購入ください。</small></div><a class="cta cta--small" href="${escapeHtml(yearReport)}" target="_blank" rel="noopener" data-offer="year_report">完全版を読む ↗</a></aside>`);
+  if (offerUrls.plus) cards.push(`<aside class="offer-card offer-card--plus"><span class="offer-card__badge">月額</span><div><h3>URASELA PLUS</h3><p>毎月の「表と裏の運勢」と、相性の読み物が届く会員プラン。</p><small>料金・解約方法はリンク先に記載しています。未成年の方は、保護者の方の同意を得てからご購入ください。</small></div><a class="cta cta--small" href="${escapeHtml(offerUrls.plus)}" target="_blank" rel="noopener" data-offer="plus">PLUSを見る ↗</a></aside>`);
   return cards.length ? `<div class="offer-list">${cards.join("")}</div>` : "";
 }
 
