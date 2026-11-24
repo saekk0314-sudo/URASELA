@@ -41,7 +41,7 @@
 | Web検索 | READY | 検索は使える |
 | 公式ページを開いて読む | READY（許可したサイトだけ） | 2026-11-24 に11サイトを許可（消費者庁・e-Gov法令・国税庁・noteヘルプ・ココナラ・X開発者文書・TikTok開発者文書・Cloudflare文書・Claudeのヘルプと文書・example.com）。noteのヘルプはnote側が自動アクセスを断るので開けない（検索で確認） |
 | ブラウザでの読み取りテスト | READY | example.com を開いてページの見出し「Example Domain」を読めた |
-| オーナーのChromeを操作する（Claude in Chrome） | BLOCKED（この環境） | オーナーのPCで動く機能。有料プラン（Pro以上）で使えるが、同じ使用量の上限を使う。いまは開設などをオーナーが手で行うので不要 |
+| オーナーのChromeを操作する（Claude in Chrome） | BLOCKED（この環境） | オーナーのMacで動く機能。有料プラン（Pro以上）で使えるが、同じ使用量の上限を使う。準備手順は `company/owner/mac-chrome-setup.md`、試しは A-028（Maxへの切り替え後） |
 | Word・Excel・PowerPoint・PDF | READY | python-docx・openpyxl・python-pptx・reportlab・pandoc・LibreOffice・pypdf。日本語フォントあり |
 | 画像（図・アイコン・バナー） | READY | SVG・HTMLを描いて画像に書き出す（例: AI社長ゼロのアイコン） |
 | AIの画像生成・AI動画（人物など） | BLOCKED | 生成サービスの接続なし。必要になったら費用と規約を調べて起案 |

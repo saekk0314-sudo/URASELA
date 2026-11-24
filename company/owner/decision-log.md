@@ -38,3 +38,4 @@
 | 2026-11-24 | A-027 | **Cloudflare Web Analytics をオンにする**（無料・Cookieなし）。返事「おっけ」を承認として受け付け | オーナーが Workers & Pages → urasela → Metrics → Web Analytics を Enable（約2分、PR #7 のマージ前に）。プライバシーポリシーに追記し、11/26の法務チェックに含める |
 | 2026-11-24 | オーナーの指示 | **KYOVEL 実務スキルパック（24本）を導入**。既存の方針・承認ルールは維持 | `.claude/skills/kyovel-*`。ほかの事業名が出る2か所を一般化（原本は urasela-hq の skills-source/）。対応表と実行環境の棚卸しは company/ops/skills-and-capabilities.md。未習得の業務はスキル化して残す運用を CLAUDE.md に追記 |
 | 2026-11-24 | 環境の変更（承認画面で承認） | **調べ物用に公式サイト11件をネットワークの許可リストに追加**（消費者庁・e-Gov法令・国税庁・noteヘルプ・ココナラ・X/TikTok/Cloudflare の開発者文書・Claudeのヘルプと文書・example.com） | Default 環境（オーナーの全セッション）に適用。読み取りに使う |
+| 2026-11-24 | 確認 | **オーナーのPCはMac**。Chrome操作（Claude in Chrome）はPro以上で使えるが、オーナーのPC側で動く機能（このクラウドのセッションからは届かない） | Macでの準備手順を `company/owner/mac-chrome-setup.md` に用意。A-028（下書きまでの試し）をMaxへの切り替え後に判断 |
