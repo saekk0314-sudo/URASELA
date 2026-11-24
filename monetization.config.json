@@ -1,0 +1,8 @@
+{
+  "_説明": "サイトに出す有料記事・会員・アフィリエイト・お問い合わせのURL。公開してよいものだけを書く（パスワードや個人情報は書かない）。同じ名前の環境変数があれば、そちらが優先される。yearReportUrls は表のキーワード（個人年数1〜9）ごとの記事URL。",
+  "yearReportUrl": "",
+  "yearReportUrls": {},
+  "plusUrl": "",
+  "affiliate": { "url": "", "title": "", "text": "" },
+  "studioContactUrl": ""
+}

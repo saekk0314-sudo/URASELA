@@ -96,29 +96,47 @@ const adSlots = {
 
 // 有料コンテンツ・月額会員・アフィリエイト・法人窓口（未設定ならサイトに何も表示しない）
 const httpsUrlPattern = /^https:\/\/[^\s"'<>]+$/;
-// 年運の完全版（表のキーワード別）: YEAR_REPORT_URLS="1=https://...,2=https://..."（カンマか改行で区切る）
+// 公開してよいURL（有料記事・会員・アフィリエイト・お問い合わせ）は monetization.config.json にも書ける。
+// 同じ名前の環境変数があればそちらを優先する（ホスティングの設定画面を触らずに、プルリクエストだけで更新できる）
+const fileSettings = await readFile(resolve(root, "monetization.config.json"), "utf8").then(
+  text => JSON.parse(text),
+  error => { if (error.code === "ENOENT") return {}; throw error; }
+);
+function setting(name, fileValue, pattern) {
+  const value = String(process.env[name] || fileValue || "").trim();
+  if (value && !pattern.test(value)) throw new Error(`${name} has an invalid format`);
+  return value;
+}
+// 年運の完全版（表のキーワード別）: YEAR_REPORT_URLS="1=https://...,2=https://..."（カンマか改行で区切る）か、設定ファイルの yearReportUrls
 function yearReportUrls() {
-  const urls = {};
   const raw = String(process.env.YEAR_REPORT_URLS || "").trim();
-  for (const entry of raw.split(/[,\n]+/).map(item => item.trim()).filter(Boolean)) {
-    const match = entry.match(/^([1-9])\s*=\s*(\S+)$/);
-    if (!match || !httpsUrlPattern.test(match[2])) throw new Error("YEAR_REPORT_URLS has an invalid format");
-    urls[match[1]] = match[2];
+  const entries = raw
+    ? raw.split(/[,\n]+/).map(item => item.trim()).filter(Boolean).map(entry => {
+        const match = entry.match(/^([1-9])\s*=\s*(\S+)$/);
+        if (!match) throw new Error("YEAR_REPORT_URLS has an invalid format");
+        return [match[1], match[2]];
+      })
+    : Object.entries(fileSettings.yearReportUrls || {});
+  const urls = {};
+  for (const [key, url] of entries) {
+    if (!/^[1-9]$/.test(key) || !httpsUrlPattern.test(String(url))) throw new Error("YEAR_REPORT_URLS has an invalid format");
+    urls[key] = String(url);
   }
   return urls;
 }
 const monetization = {
-  yearReportUrl: configured("YEAR_REPORT_URL", httpsUrlPattern),
+  yearReportUrl: setting("YEAR_REPORT_URL", fileSettings.yearReportUrl, httpsUrlPattern),
   yearReportUrls: yearReportUrls(),
-  plusUrl: configured("PLUS_URL", httpsUrlPattern),
+  plusUrl: setting("PLUS_URL", fileSettings.plusUrl, httpsUrlPattern),
   affiliate: {
-    url: configured("AFFILIATE_URL", httpsUrlPattern),
-    title: configured("AFFILIATE_TITLE", /^[^<>"]{1,80}$/),
-    text: configured("AFFILIATE_TEXT", /^[^<>"]{1,160}$/)
+    url: setting("AFFILIATE_URL", fileSettings.affiliate?.url, httpsUrlPattern),
+    title: setting("AFFILIATE_TITLE", fileSettings.affiliate?.title, /^[^<>"]{1,80}$/),
+    text: setting("AFFILIATE_TEXT", fileSettings.affiliate?.text, /^[^<>"]{1,160}$/)
   }
 };
-const studioContactUrl = configured(
+const studioContactUrl = setting(
   "STUDIO_CONTACT_URL",
+  fileSettings.studioContactUrl,
   /^(https:\/\/[^\s"'<>]+|mailto:[^\s"'<>]+)$/
 );
 

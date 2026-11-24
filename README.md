@@ -71,6 +71,8 @@ GA4では、診断開始・24問完了・5占術完了・結果表示・共有�
 | --- | --- |
 | `YEAR_REPORT_URL` | 年運の完全版（有料記事など）のURL。年運セクションに「有料」表示つきで出る |
 | `YEAR_REPORT_URLS` | 表のキーワード別（個人年数1〜9）の完全版のURL。`1=https://...,2=https://...` の形。その人の番号のURLがあれば優先し、なければ `YEAR_REPORT_URL` を使う |
+
+上の有料記事・会員・アフィリエイト・お問い合わせのURLは、リポジトリ直下の `monetization.config.json` にも書けます（同じ名前の環境変数があればそちらが優先）。公開してよいURLだけを書き、プルリクエストで更新します。
 | `PLUS_URL` | 月額会員 URASELA PLUS のURL。「月額」表示つきで出る |
 | `AFFILIATE_URL` / `AFFILIATE_TITLE` / `AFFILIATE_TEXT` | 結果画面のアフィリエイト枠。「PR」表示と `rel="sponsored"` つきで出る |
 | `STUDIO_CONTACT_URL` | `/studio/` の「制作を相談する」ボタンの宛先（`https://` か `mailto:`）。未設定ならお問い合わせページ |
