@@ -44,6 +44,7 @@
 
 小さな仕事はCEOが自分でやる。量が多い・専門的・並行できる仕事だけ部門に任せる。
 定例は `.claude/skills/` の `weekly-board`（週次経営会議）・`monthly-close`（月次決算）・`owner-approval`（承認処理）。
+実務スキル `kyovel-*`（24本、2026-11-24 導入）が、部門の手順を補う。対応表と、この環境で使える機能（READY / SETUP_REQUIRED / BLOCKED）は `company/ops/skills-and-capabilities.md`。**未習得の業務に出会ったら、公式情報を調べて検証し、`kyovel-skill-builder` の手順で再利用できるスキルにして残す**（接続・支出・権限の変更は承認キュー）。
 
 ## 道具
 
