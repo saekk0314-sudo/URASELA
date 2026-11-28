@@ -1,0 +1,59 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="node_modules/@fontsource/cormorant-garamond/600.css">
+<link rel="stylesheet" href="node_modules/@fontsource/cormorant-garamond/500.css">
+<link rel="stylesheet" href="node_modules/@fontsource/noto-serif-jp/400.css">
+<link rel="stylesheet" href="node_modules/@fontsource/noto-serif-jp/500.css">
+<style>
+body{margin:0;background:#000}
+#h{width:1500px;height:500px;position:relative;overflow:hidden;background:#18071A}
+.left{position:absolute;left:0;top:0;width:750px;height:500px;background:radial-gradient(ellipse at 45% 25%,#FFF7EA 0%,#F4E3C9 45%,#C9AB86 100%)}
+.right{position:absolute;left:750px;top:0;width:750px;height:500px;background:radial-gradient(ellipse at 55% 25%,#43235A 0%,#22102D 55%,#0E0612 100%)}
+.shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(14,6,18,0) 0%,rgba(14,6,18,.1) 30%,rgba(14,6,18,.82) 58%,#0E0612 100%)}
+svg.deco{position:absolute;inset:0}
+.t{position:absolute;left:0;right:0;text-align:center;padding-left:100px}
+.logo{top:118px;font:600 156px/1 "Cormorant Garamond",serif;letter-spacing:8px;background:linear-gradient(90deg,#F3D9A2 0%,#EBCB92 42%,#E9C9F2 58%,#D7AEF2 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 2px 10px rgba(0,0,0,.45))}
+.kana{top:282px;font:400 24px/1 "Noto Serif JP",serif;color:#E9DCC8;letter-spacing:10px}
+.kana:before,.kana:after{content:"";display:inline-block;width:90px;height:1px;background:linear-gradient(90deg,transparent,#CDB27E);vertical-align:middle;margin:0 18px}
+.kana:after{background:linear-gradient(90deg,#C9A6E6,transparent)}
+.tag{top:322px;font:500 46px/1.2 "Noto Serif JP",serif;color:#F7EDE0;letter-spacing:4px;text-shadow:0 2px 12px rgba(0,0,0,.6)}
+.pill{top:398px}
+.pill span{display:inline-block;font:400 23px/1 "Noto Serif JP",serif;color:#E6D3F7;border:1px solid rgba(214,174,242,.7);border-radius:30px;padding:10px 26px;letter-spacing:2px;background:rgba(24,7,26,.55)}
+.url{top:452px;font:500 24px/1 "Cormorant Garamond",serif;color:#E7C98F;letter-spacing:3px}
+</style></head><body><div id="h">
+<div class="left"></div><div class="right"></div><div class="shade"></div>
+<svg class="deco" viewBox="0 0 1500 500">
+ <defs>
+  <linearGradient id="seam" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF4DA"/><stop offset=".7" stop-color="#E8C7F5" stop-opacity=".9"/><stop offset="1" stop-color="#E8C7F5" stop-opacity="0"/></linearGradient>
+  <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6"/></filter>
+  <symbol id="sp" viewBox="-10 -10 20 20"><path d="M0 -10 L2 -2 L10 0 L2 2 L0 10 L-2 2 L-10 0 L-2 -2 Z"/></symbol>
+ </defs>
+ <ellipse cx="750" cy="250" rx="735" ry="300" fill="none" stroke="#CDAE7C" stroke-opacity=".35" stroke-width="2"/>
+ <ellipse cx="750" cy="250" rx="715" ry="282" fill="none" stroke="#C99BD6" stroke-opacity=".25" stroke-width="1.5"/>
+ <rect x="748" y="0" width="4" height="330" fill="url(#seam)"/>
+ <rect x="744" y="0" width="12" height="300" fill="url(#seam)" opacity=".35" filter="url(#glow)"/>
+ <g transform="translate(750 70)"><circle r="26" fill="#FFF3D6" opacity=".55" filter="url(#glow)"/><path d="M0 -58 L5 -6 L50 0 L5 6 L0 58 L-5 6 L-50 0 L-5 -6 Z" fill="#FFF8E6"/><path d="M0 -26 L3 -3 L26 0 L3 3 L0 26 L-3 3 L-26 0 L-3 -3 Z" fill="#FFFFFF" transform="rotate(45)"/></g>
+ <g stroke="#B58F58" stroke-opacity=".75" fill="none" stroke-width="1.6" transform="translate(255 150)">
+  <circle r="46"/><circle r="70" stroke-opacity=".45"/>
+  <path d="M0 -92 L0 92 M-92 0 L92 0 M-62 -62 L62 62 M62 -62 L-62 62" stroke-opacity=".5"/>
+  <path d="M0 -40 L9 -9 L40 0 L9 9 L0 40 L-9 9 L-40 0 L-9 -9 Z" fill="#C9A066" fill-opacity=".5"/>
+ </g>
+ <g fill="#B58F58" opacity=".8"><circle cx="90" cy="70" r="4"/><circle cx="160" cy="250" r="3"/><circle cx="420" cy="90" r="3.5"/><circle cx="520" cy="200" r="3"/><circle cx="610" cy="120" r="2.5"/></g>
+ <path d="M90 70 L160 250 M420 90 L520 200 L610 120" fill="none" stroke="#B58F58" stroke-opacity=".45" stroke-width="1.2"/>
+ <g fill="#C79A55"><use href="#sp" x="470" y="40" width="22" height="22"/><use href="#sp" x="620" y="210" width="16" height="16"/><use href="#sp" x="60" y="190" width="18" height="18"/></g>
+ <g transform="translate(1262 128)"><circle r="40" fill="#E7C8FF" opacity=".35" filter="url(#glow)"/><path d="M14 -34 A36 36 0 1 0 14 34 A28 28 0 1 1 14 -34 Z" fill="#F1DDFF"/></g>
+ <g fill="#D7AEF2" opacity=".85"><circle cx="1400" cy="60" r="3.5"/><circle cx="1110" cy="80" r="3"/><circle cx="1000" cy="190" r="3"/><circle cx="1440" cy="230" r="2.5"/><circle cx="890" cy="110" r="2.5"/></g>
+ <path d="M1110 80 L1000 190 M1400 60 L1440 230" fill="none" stroke="#D7AEF2" stroke-opacity=".4" stroke-width="1.2"/>
+ <g fill="#E3C2F7"><use href="#sp" x="1160" y="200" width="22" height="22"/><use href="#sp" x="930" y="40" width="16" height="16"/><use href="#sp" x="1340" y="250" width="18" height="18"/></g>
+ <g stroke="#D7AEF2" stroke-opacity=".55" fill="none" stroke-width="2">
+  <rect x="1262" y="356" width="88" height="140" rx="8" transform="rotate(-10 1306 426)"/>
+  <rect x="1362" y="348" width="88" height="140" rx="8" transform="rotate(8 1406 418)"/>
+ </g>
+ <g transform="translate(1310 430) rotate(-10)" fill="#D7AEF2" opacity=".6"><path d="M0 -22 L5 -5 L22 0 L5 5 L0 22 L-5 5 L-22 0 L-5 -5 Z"/></g>
+ <path d="M1414 404 A16 16 0 1 0 1414 436 A12 12 0 1 1 1414 404 Z" fill="#D7AEF2" opacity=".6"/>
+</svg>
+<div class="t logo">URASELA</div>
+<div class="t kana">ウラセラ</div>
+<div class="t tag">表と裏、2人のあなたを読む</div>
+<div class="t pill"><span>診断は無料・登録不要 ｜ 2027年の表と裏の運勢、公開中</span></div>
+<div class="t url">urasela.pages.dev</div>
+</div></body></html>

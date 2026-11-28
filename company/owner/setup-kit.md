@@ -14,9 +14,9 @@
 
 | 順 | サービス | アカウント | アイコン |
 | --- | --- | --- | --- |
-| 1 | X | AI社長ゼロ | `company/owner/assets/ai-shacho-zero.png` |
-| 2 | X | URASELA公式 | `assets/icon-512.png`（サイトのアイコン） |
-| 3 | note | URASELA（年運の完全版・のちにPLUS） | `assets/icon-512.png` |
+| 1 | X | AI社長ゼロ | `company/owner/assets/ai-shacho-zero.png`（ヘッダー：`x-header-ai-shacho-zero.png`） |
+| 2 | X | URASELA公式 | `company/owner/assets/urasela-sns-icon.png`（ヘッダー：`x-header-urasela.png`） |
+| 3 | note | URASELA（年運の完全版・のちにPLUS） | `company/owner/assets/urasela-sns-icon.png` |
 | 4 | note | AI社長ゼロ（実録。A-021 承認済み） | `company/owner/assets/ai-shacho-zero.png` |
 | 5 | ココナラ | **11/22にKYOVEL名義で作ったアカウントを使う**（URASELA Studioとして出品） | `assets/icon-512.png` |
 | 6 | ASP（もしも・A8.net） | サイトの登録 | — |
