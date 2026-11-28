@@ -30,7 +30,7 @@ jobs.push(["note/00-magazine.png", 1280, 670, frame(1280, 670, `<div class="lab"
 jobs.push(["note/00-hayami.png", 1280, 670, frame(1280, 670, `<div class="lab" style="font-size:28px;margin-bottom:18px">無料で読める</div><div class="k" style="font-size:80px;line-height:1.15">2027年 表と裏の運勢<br>9タイプ早見表</div><div class="chips" style="margin-top:28px">${chips}</div>`)]);
 // X 投稿画像（1200×675）
 for (let n = 1; n <= 9; n++) { const kw = YEAR_THEMES[n].keyword, { p, r } = months(n);
-  jobs.push([`x/omote-${n}-${kw}.png`, 1200, 675, frame(1200, 675, `<div class="lab" style="font-size:26px;margin-bottom:18px">#2027年の裏運勢</div><div class="k" style="font-size:96px;line-height:1.1">表が「${kw}」の人</div><div class="sub" style="font-size:32px;margin:20px 0 24px">${lines[n]}1年</div><div class="mo" style="font-size:30px;padding:10px 30px">勝負の月 ${p.join("・")}月　／　休む月 ${r.join("・")}月</div>`, "あなたの表と裏は？ 生年月日だけで無料診断 ｜ URASELA")]); }
+  jobs.push([`x/omote-${n}-${kw}.png`, 1200, 675, frame(1200, 675, `<div class="lab" style="font-size:26px;margin-bottom:18px">#2027年の裏運勢</div><div class="k" style="font-size:96px;line-height:1.1">表が「${kw}」の人</div><div class="sub" style="font-size:32px;margin:20px 0 24px">${lines[n]}1年</div><div class="mo" style="font-size:30px;padding:10px 30px">勝負の月 ${p.join("・")}月　／　休む月 ${r.join("・")}月</div>`, "あなたの<span style=\"font-family:'Noto Serif JP';font-weight:500;letter-spacing:2px\">2027</span>年の表と裏は？ 生年月日だけで無料 ｜ URASELA")]); }
 const seen = new Map(); for (let y = 1960; y <= 1968; y++) { const f = calculateYearFortune({ birthdate: `${y}-06-15` }); seen.set(f.mainStar, f); }
 ["一白水星","二黒土星","三碧木星","四緑木星","五黄土星","六白金星","七赤金星","八白土星","九紫火星"].forEach((star, i) => { const f = seen.get(star);
   jobs.push([`x/ura-${i + 1}-${star}.png`, 1200, 675, frame(1200, 675, `<div class="lab" style="font-size:26px;margin-bottom:18px">#2027年の裏運勢　裏のテーマ</div><div class="k" style="font-size:92px;line-height:1.1">${star}の人</div><div class="sub" style="font-size:34px;margin:20px 0 12px">${f.palace}・${f.flowLabel}　心の奥のキーワード「${f.inner.keyword}」</div><div class="sub" style="font-size:28px;opacity:.85;margin-bottom:8px">${f.flowCopy}</div>`, "あなたの本命星は？ 生年月日だけで無料診断 ｜ URASELA")]); });
@@ -38,7 +38,9 @@ jobs.push(["x/launch.png", 1200, 675, frame(1200, 675, `<div class="lab" style="
 jobs.push(["x/paid.png", 1200, 675, frame(1200, 675, `<div class="lab" style="font-size:28px;margin-bottom:18px">noteで販売中（有料・各480円）</div><div class="k" style="font-size:88px;line-height:1.15">2027年 表と裏の運勢<br>完全版</div><div class="sub" style="font-size:30px;margin-top:22px">表のキーワード別・全9本｜12ヶ月の流れ・恋愛・仕事・お金</div>`)]);
 const b = await chromium.launch(); const pg = await b.newPage({ deviceScaleFactor: 1 });
 await pg.route("http://local.test/**", r => r.fulfill({ path: path.join(F, decodeURIComponent(new URL(r.request().url()).pathname)) }));
+const only = process.argv[4];
 for (const [file, w, h, html] of jobs) {
+  if (only && !file.includes(only)) continue;
   await pg.setViewportSize({ width: w, height: h });
   await pg.route("http://local.test/page.html", r => r.fulfill({ body: html, contentType: "text/html; charset=utf-8" }));
   await pg.goto("http://local.test/page.html"); await pg.evaluate(() => document.fonts.ready); await pg.waitForTimeout(150);
