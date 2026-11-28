@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="42%" r="70%"><stop offset="0" stop-color="#3b2f8f"/><stop offset="1" stop-color="#0d1026"/></radialGradient>
+  </defs>
+  <rect width="400" height="400" fill="url(#bg)"/>
+  <circle cx="200" cy="200" r="118" fill="none" stroke="#f2d39e" stroke-width="30" stroke-dasharray="640 102" stroke-dashoffset="-60" stroke-linecap="round" transform="rotate(-90 200 200)"/>
+  <path d="M287 92l7 22 22 7-22 7-7 22-7-22-22-7 22-7z" fill="#fff"/>
+  <text x="200" y="228" text-anchor="middle" font-family="DejaVu Sans, Arial, sans-serif" font-weight="700" font-size="92" fill="#ffffff" letter-spacing="2">AI</text>
+</svg>

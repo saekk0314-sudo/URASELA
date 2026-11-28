@@ -9,5 +9,11 @@ window.URASELA_CONFIG = Object.freeze({
     divinations: "",
     resultMiddle: "",
     compatibilityBottom: ""
+  }),
+  monetization: Object.freeze({
+    yearReportUrl: "",
+    yearReportUrls: Object.freeze({}),
+    plusUrl: "",
+    affiliate: Object.freeze({ url: "", title: "", text: "" })
   })
 });

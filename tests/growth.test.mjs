@@ -61,3 +61,39 @@ test("ビルドはSEOファイルとキャラ個別ページを実ファイル�
   assert.match(build, /homeMarkup\(\)/);
   assert.match(build, /noindex,follow/);
 });
+
+test("リニューアル: 年運ページ・Studioページ・有料導線は設定があるときだけ表示する", async () => {
+  const [build, app, config, sitemap] = await Promise.all([
+    source("../scripts/build.mjs"), source("../src/app.js"), source("../config.js"), source("../sitemap.xml")
+  ]);
+  assert.ok(build.includes("`${FORTUNE_YEAR}/index.html`"));
+  assert.ok(build.includes('"studio/index.html"'));
+  for (const name of ["YEAR_REPORT_URL", "YEAR_REPORT_URLS", "PLUS_URL", "AFFILIATE_URL", "STUDIO_CONTACT_URL"]) assert.ok(build.includes(name), name);
+  assert.match(config, /yearReportUrl:\s*""/);
+  assert.match(config, /plusUrl:\s*""/);
+  assert.match(config, /yearReportUrls:\s*Object\.freeze\(\{\}\)/);
+  // 完全版のリンクは、その人の表のキーワード（個人年数）の記事を優先する
+  assert.match(app, /yearReportUrlFor\(fortune\.personalYear\)/);
+  assert.match(app, /offerCards\("year", fortune\)/);
+  assert.doesNotMatch(app, /offerCards\("year"\)/);
+  assert.match(app, /rel="sponsored noopener"/);
+  assert.match(app, /affiliate-card__badge">PR</);
+  for (const event of ["year_fortune_view", "offer_click"]) assert.ok(app.includes(`"${event}"`), event);
+  // URLはリポジトリの設定ファイルにも書ける。書くのは https のURLだけ（年運は個人年数1〜9ごと）
+  assert.ok(build.includes("monetization.config.json"));
+  const settings = JSON.parse(await source("../monetization.config.json"));
+  const urls = [settings.yearReportUrl, settings.plusUrl, settings.affiliate?.url, ...Object.values(settings.yearReportUrls || {})].filter(Boolean);
+  for (const url of urls) assert.match(url, /^https:\/\/[^\s"'<>]+$/);
+  for (const key of Object.keys(settings.yearReportUrls || {})) assert.match(key, /^[1-9]$/);
+  if (settings.studioContactUrl) assert.match(settings.studioContactUrl, /^(https:\/\/|mailto:)/);
+  assert.match(sitemap, /\/2027\//);
+  assert.match(sitemap, /\/studio\//);
+});
+
+test("料金の方針: 診断は無料のまま、有料コンテンツは任意と明記する", () => {
+  const about = LEGAL_PAGES.find(page => page.slug === "about");
+  const text = JSON.stringify(about);
+  assert.match(text, /これからも無料/);
+  assert.match(text, /任意の有料コンテンツ/);
+  assert.match(text, /「広告」「PR」/);
+});

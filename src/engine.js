@@ -1,4 +1,4 @@
-import { CHARACTERS, DIMENSIONS, QUESTIONS, TAROT } from "./data.js";
+import { CHARACTERS, DIMENSIONS, INNER_TIDES, MONTH_RHYTHM, QUESTIONS, TAROT, YEAR_THEMES } from "./data.js";
 
 const STEMS = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"];
 const BRANCHES = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"];
@@ -292,6 +292,52 @@ export function calculateKyusei(profile, targetDate = new Date()) {
     annualNumber, annual, flowPalaceNumber, flow,
     summary:`本命星は${main.name}。${main.trait}を持ち、月命星${monthStar.name}の${monthStar.trait}が対人面に表れます。`,
     flowSummary:`${flowYear}年は${annual.name}が年盤の中心。あなたの${main.name}は${flow.palace}を巡り、「${flow.copy}」です。`
+  };
+}
+
+export const FORTUNE_YEAR = 2027;
+
+/**
+ * 1年の「表と裏の運勢」。
+ * 表のテーマ＝数秘術の個人年数、裏のテーマ＝九星気学の年盤であなたの本命星が入る宮。
+ * 月ごとのリズム＝個人月数（個人年数＋暦の月）。診断済みなら表キャラ・裏キャラの言葉も重ねる。
+ */
+export function calculateYearFortune(profile, characters = {}, year = FORTUNE_YEAR) {
+  if (!profile?.birthdate) throw new Error("年運には生年月日が必要です");
+  const { surface, inner } = characters;
+  const numerology = calculateNumerology(profile, year);
+  const kyusei = calculateKyusei(profile, year);
+  const theme = YEAR_THEMES[numerology.personalYear];
+  const tide = INNER_TIDES[kyusei.flowPalaceNumber];
+  const months = Array.from({ length: 12 }, (_, index) => {
+    const number = digitRoot(numerology.personalYear + index + 1, false);
+    return { month: index + 1, number, ...MONTH_RHYTHM[number] };
+  });
+  const peakMonths = months.filter(item => item.number === 1 || item.number === 8).map(item => item.month);
+  const restMonths = months.filter(item => item.number === 7 || item.number === 9).map(item => item.month);
+  const firstStrength = surface ? surface.strength.split("・")[0] : "";
+  const surfaceText = surface
+    ? `${theme.outer}表の「${surface.name}」は、${firstStrength}を前に出すほど追い風をつかめます。`
+    : theme.outer;
+  const innerText = inner ? `${tide.text}裏の「${inner.name}」は、${inner.growth}` : tide.text;
+  return {
+    year,
+    personalYear: numerology.personalYear,
+    mainStar: kyusei.main.name,
+    annualStar: kyusei.annual.name,
+    palace: kyusei.flow.palace,
+    flowLabel: kyusei.flow.label,
+    flowCopy: kyusei.flow.copy,
+    surface: { keyword: theme.keyword, text: surfaceText },
+    inner: { keyword: tide.keyword, text: innerText },
+    months,
+    peakMonths,
+    restMonths,
+    action: theme.action,
+    caution: inner ? inner.caution : "",
+    personalized: Boolean(surface && inner),
+    summary: `${year}年は${kyusei.annual.name}が年盤の中心。あなたの本命星（${kyusei.main.name}）は${kyusei.flow.palace}に入り、「${kyusei.flow.label}」の1年です。`,
+    shareCopy: `私の${year}年は、表が「${theme.keyword}」で裏が「${tide.keyword}」。勝負の月は${peakMonths.join("・")}月。\n#${year}年の裏運勢 #URASELA #ウラセラ`
   };
 }
 

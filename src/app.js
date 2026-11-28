@@ -1,7 +1,7 @@
 import { CHARACTERS, FAQ, FORTUNE_METHODS, PREFECTURES, QUESTIONS, TAROT } from "./data.js";
 import {
-  analyzeProfile, calculateCompatibility, combinedTarotReading, decodeSharedResult,
-  encodeSharedResult, shuffleTarot, tarotMessage
+  analyzeProfile, calculateCompatibility, calculateYearFortune, combinedTarotReading, decodeSharedResult,
+  encodeSharedResult, FORTUNE_YEAR, shuffleTarot, tarotMessage
 } from "./engine.js";
 import { initPrivacyControls, trackEvent, trackScreen, trackShare } from "./analytics.js";
 import { adSlot, hydrateAds } from "./ads.js";
@@ -11,6 +11,20 @@ const toast = document.querySelector("#toast");
 const runtimeConfig = window.URASELA_CONFIG || {};
 const siteUrl = String(runtimeConfig.siteUrl || "https://urasela.pages.dev").replace(/\/$/, "");
 const today = new Date().toISOString().slice(0, 10);
+// 有料コンテンツ・月額会員・アフィリエイトは、URLが設定されたときだけ表示する（未設定なら何も出さない）
+const monetization = runtimeConfig.monetization || {};
+const httpsUrl = value => (/^https:\/\/[^\s"'<>]+$/.test(String(value || "")) ? String(value) : "");
+const offerUrls = {
+  yearReport: httpsUrl(monetization.yearReportUrl),
+  plus: httpsUrl(monetization.plusUrl),
+  affiliate: httpsUrl(monetization.affiliate?.url)
+};
+// 年運の完全版は表のキーワード（個人年数1〜9）ごとの記事。番号ごとのURLがあればそれを、なければ共通のURLを使う
+const yearReportByNumber = Object.fromEntries(
+  Object.entries(monetization.yearReportUrls || {}).filter(([key, url]) => /^[1-9]$/.test(key) && httpsUrl(url))
+);
+const yearReportUrlFor = number => yearReportByNumber[String(number)] || offerUrls.yearReport;
+const LEVEL_CLASS = { "攻め":"peak", "追い風":"up", "整える":"steady", "休む":"rest" };
 const defaultProfile = {
   birthdate:"", gender:"回答しない", birthplace:"東京都", city:"", country:"", birthTimeKnown:false, birthtime:""
 };
@@ -19,7 +33,8 @@ const state = {
   screen:"home", profile:{...defaultProfile}, answers:Array(24).fill(null), questionIndex:0,
   analysisPercent:0, tarotDeck:[], tarotStage:0, tarotCursor:0, tarotOffers:[], tarotReveal:null,
   tarotSelections:[], result:null, selectedCharacter:null, compatibilityResult:null,
-  compatibilityForm:{ mode:"love", selfSurface:1, selfInner:2, partnerSurface:5, partnerInner:8 }
+  compatibilityForm:{ mode:"love", selfSurface:1, selfInner:2, partnerSurface:5, partnerInner:8 },
+  yearBirthdate:"", yearFortune:null
 };
 
 const escapeHtml = value => String(value ?? "").replace(/[&<>'"]/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[char]));
@@ -98,7 +113,7 @@ function shell(content, { dark=true, hideNav=false } = {}) {
     <header class="site-header">${logo()}
       <nav class="desktop-nav" aria-label="メインナビゲーション">
         <a href="./" data-action="home">TOP</a><a href="characters/" data-action="characters">キャラ一覧</a>
-        <a href="compatibility/" data-action="compatibility">相性チェック</a><button data-action="scroll" data-target="flow">診断の流れ</button>
+        <a href="compatibility/" data-action="compatibility">相性チェック</a><a class="nav-season" href="${FORTUNE_YEAR}/" data-action="year">${FORTUNE_YEAR}年運勢<i>NEW</i></a>
         <button data-action="scroll" data-target="faq">よくある質問</button>
         <button class="nav-cta" data-action="start">今すぐ無料で診断する</button>
       </nav>
@@ -107,7 +122,7 @@ function shell(content, { dark=true, hideNav=false } = {}) {
     ${hideNav ? "" : `<nav class="mobile-nav" aria-label="モバイルナビゲーション">
       <a href="./" data-action="home"><span>✦</span>TOP</a><a href="characters/" data-action="characters"><span>▤</span>キャラ</a>
       <button class="mobile-nav__main" data-action="start"><span>◇</span>診断</button>
-      <a href="compatibility/" data-action="compatibility"><span>♡</span>相性</a><button data-action="scroll" data-target="faq"><span>?</span>FAQ</button>
+      <a href="compatibility/" data-action="compatibility"><span>♡</span>相性</a><a href="${FORTUNE_YEAR}/" data-action="year"><span>✷</span>${FORTUNE_YEAR}</a>
     </nav>`}
     ${hasLast && state.screen === "home" ? `<button class="last-result-pill" data-action="last-result">前回の結果を見る</button>` : ""}
   </div>`;
@@ -180,6 +195,7 @@ function renderHome() {
       <div class="hero__label hero__label--surface"><b>表キャラ</b><span>外に見せるあなた</span></div>
       <div class="hero__label hero__label--inner"><b>裏キャラ</b><span>心の奥にいるあなた</span></div>
     </section>
+    ${seasonBanner()}
     <section class="section methods" aria-labelledby="methods-title">
       <p class="section-kicker">WHY URASELA</p><h2 id="methods-title">なぜ、あなたの表と裏がわかるの？</h2>
       <div class="method-grid">${methods}</div>
@@ -200,7 +216,7 @@ function renderHome() {
           <span class="sample-pair__x">×</span>
           <article>${characterPortrait(sampleB)}<small>裏キャラ</small><h3>${sampleB.name}</h3><p>${sampleB.catch}</p></article>
         </div>
-        <article class="sample-score"><small>TYPE 01 × TYPE 02</small><p>総合運勢</p><b>87<em>%</em></b><div><span style="--value:90%">恋愛運</span><span style="--value:82%">仕事運</span><span style="--value:85%">人間関係</span></div></article>
+        <article class="sample-score"><small>TYPE 01 × TYPE 02</small><p>あなたの読み解き</p><b>表<em>と</em>裏</b><p class="sample-score__topics">恋愛・仕事・お金・人間関係まで読み解く</p></article>
         <article class="sample-compat"><h3>あの人との相性もチェック！</h3><p>恋愛・友達・仕事。表と裏の4つの視点から2人を分析。</p><button class="cta cta--small" data-action="compatibility">相性チェックへ →</button><span aria-hidden="true">♡</span></article>
       </div>
     </section>
@@ -221,7 +237,7 @@ function renderHome() {
 }
 
 function footer() {
-  return `<footer class="footer"><div>${logo()}<p>表のあなたと裏のあなた。<br>まだ知らない自分に出会う占い。</p></div><nav aria-label="フッターナビゲーション"><a href="./" data-action="home">TOP</a><a href="characters/" data-action="characters">キャラ一覧</a><a href="compatibility/" data-action="compatibility">相性チェック</a><button data-action="scroll" data-target="flow">診断の流れ</button><button data-action="scroll" data-target="faq">よくある質問</button><a href="about/">URASELAについて</a><a href="privacy/">プライバシーポリシー</a><a href="disclaimer/">免責事項</a><a href="contact/">お問い合わせ</a><a href="terms/">利用規約</a></nav><small>© 2026 URASELA. 結果は娯楽・自己理解のための参考情報です。</small></footer>`;
+  return `<footer class="footer"><div>${logo()}<p>表のあなたと裏のあなた。<br>まだ知らない自分に出会う占い。</p></div><nav aria-label="フッターナビゲーション"><a href="./" data-action="home">TOP</a><a href="characters/" data-action="characters">キャラ一覧</a><a href="compatibility/" data-action="compatibility">相性チェック</a><a href="${FORTUNE_YEAR}/" data-action="year">${FORTUNE_YEAR}年の運勢</a><button data-action="scroll" data-target="flow">診断の流れ</button><button data-action="scroll" data-target="faq">よくある質問</button><a href="studio/">法人・クリエイターの方へ</a><a href="about/">URASELAについて</a><a href="privacy/">プライバシーポリシー</a><a href="disclaimer/">免責事項</a><a href="contact/">お問い合わせ</a><a href="terms/">利用規約</a></nav><small>© 2026 URASELA. 結果は娯楽・自己理解のための参考情報です。</small></footer>`;
 }
 
 function renderProfileForm() {
@@ -377,7 +393,7 @@ function resultActions(result) {
 
 function crossSection(result) {
   const c=result.cross;
-  return `<section class="result-section cross-section"><div class="result-section__title"><span>♢</span><div><small>CROSS ANALYSIS</small><h2>心理 × 占術のクロス解析</h2></div></div>
+  return `<section class="result-section cross-section" id="cross"><div class="result-section__title"><span>♢</span><div><small>CROSS ANALYSIS</small><h2>心理 × 占術のクロス解析</h2></div></div>
     <div class="cross-grid"><article><small>一致している性質</small><b>${c.agreement.join("・") || "変化の途中"}</b><p>${c.headline}</p></article><article><small>内側に隠れやすい性質</small><b>${c.inward.join("・") || "大きな差なし"}</b><p>${c.hiddenText}</p></article><article><small>占術で強い資質</small><b>${c.fortuneHidden.join("・") || result.fortunes.shichu.strongest + "の適応力"}</b><p>まだ使い切っていない、生まれ持った伸びしろです。</p></article><article><small>経験で育てた資質</small><b>${c.selfDeveloped.join("・") || result.fortunes.astrology.dominant + "の表現"}</b><p>選択と経験によって後天的に磨かれた強みです。</p></article></div>
   </section>`;
 }
@@ -388,7 +404,7 @@ function fortuneSection(result) {
   const positions=["過去","現在","近未来"];
   const tarotSpread=result.tarotSelections.map((card,index)=>`<div>${tarotArt(card)}<small>${positions[index]}・${card.reversed ? "逆位置" : "正位置"}</small><b>${card.name}</b></div>`).join("");
   const tarotReadings=result.tarotSelections.map((card,index)=>`<article><span>0${index+1}</span><div><small>${positions[index]}・${card.reversed ? "逆位置" : "正位置"}</small><b>${card.name}</b><p>${tarotMessage(card,positions[index]).message}</p></div></article>`).join("");
-  return `<section class="result-section fortunes-section"><div class="result-section__title"><span>✦</span><div><small>5 DIVINATIONS</small><h2>5つの占術結果</h2></div></div>
+  return `<section class="result-section fortunes-section" id="fortunes"><div class="result-section__title"><span>✦</span><div><small>5 DIVINATIONS</small><h2>5つの占術結果</h2></div></div>
     <div class="fortune-results">
       <article class="fortune-card" data-fortune-method="shichu"><header><span>☯</span><div><small>FOUR PILLARS</small><h3>四柱推命</h3></div></header><div class="pillars">${Object.entries(shichu.pillars).map(([key,value])=>`<span><small>${{year:"年柱",month:"月柱",day:"日柱",hour:"時柱"}[key]}</small><b>${value}</b></span>`).join("")}</div><div class="element-bars">${Object.entries(shichu.elements).map(([key,value])=>`<span style="--value:${Math.min(100,value/3.4*100)}%"><b>${key}</b><i></i></span>`).join("")}</div><h4>日主 ${shichu.dayMaster}・${shichu.dayElement}の人</h4><p>${shichu.summary}</p><small class="precision">${shichu.precision}</small></article>
       <article class="fortune-card" data-fortune-method="astrology"><header><span>☾</span><div><small>ASTROLOGY</small><h3>西洋占星術</h3></div></header><div class="planet-grid">${planets.map(p=>`<span><small>${p.label}<i>${p.role}</i></small><b>${p.sign}</b><em>${p.degree}°</em></span>`).join("")}</div><h4>${astrology.dominant}のエレメントが優勢</h4><p>${astrology.summary}</p><small class="precision">${astrology.precision}</small></article>
@@ -406,8 +422,96 @@ function combinationSections(result) {
     ["♡","恋愛",combo.love],["▣","仕事",combo.work],["¥","お金",combo.money],["◎","人間関係",combo.relations],
     ["＋","強み",combo.strengths.join("・")],["−","弱み",combo.weaknesses.join("・")],["!","注意点",combo.caution],["↗","今後の伸ばし方",combo.growth]
   ];
-  return `<section class="result-section identity-section"><div class="result-section__title"><span>∞</span><div><small>YOUR TRUE SELF</small><h2>あなたはどんな人か</h2></div></div><h3>${combo.title}</h3><p>${combo.identity}</p><blockquote>${combo.gap}</blockquote></section>
+  return `<section class="result-section identity-section" id="identity"><div class="result-section__title"><span>∞</span><div><small>YOUR TRUE SELF</small><h2>あなたはどんな人か</h2></div></div><h3>${combo.title}</h3><p>${combo.identity}</p><blockquote>${combo.gap}</blockquote></section>
     <section class="result-section life-section"><div class="life-grid">${items.map(([icon,title,text])=>`<article><span>${icon}</span><h3>${title}</h3><p>${text}</p></article>`).join("")}</div></section>`;
+}
+
+function seasonBanner() {
+  return `<section class="season-banner" aria-labelledby="season-title"><div class="season-banner__body"><p class="section-kicker">NEW ・ ${FORTUNE_YEAR} FORTUNE</p><h2 id="season-title">${FORTUNE_YEAR}年の「表と裏の運勢」</h2><p>生年月日だけで、あなたの${FORTUNE_YEAR}年のテーマと勝負の月がわかる。診断済みなら、表キャラ×裏キャラも重ねて読みます。</p></div><a class="cta" href="${FORTUNE_YEAR}/" data-action="year">${FORTUNE_YEAR}年の運勢を見る <span>→</span></a></section>`;
+}
+
+function resultJumpNav(shared) {
+  const items = shared
+    ? [["year-fortune", `${FORTUNE_YEAR}年`], ["identity", "本質"], ["compat-next", "相性"]]
+    : [["year-fortune", `${FORTUNE_YEAR}年`], ["cross", "クロス解析"], ["fortunes", "5つの占術"], ["identity", "本質"], ["compat-next", "相性"]];
+  return `<nav class="result-jump" aria-label="結果の目次">${items.map(([id,label])=>`<button type="button" data-action="jump" data-target="${id}">${label}</button>`).join("")}</nav>`;
+}
+
+function yearMonths(fortune) {
+  return `<ol class="year-months" aria-label="${fortune.year}年の月ごとのリズム">${fortune.months.map(item=>`<li class="year-month year-month--${LEVEL_CLASS[item.level]}"><small>${item.month}月</small><b>${item.level}</b><span>${item.note}</span></li>`).join("")}</ol>`;
+}
+
+function yearCore(fortune) {
+  return `<p class="year-lead">${fortune.summary}${fortune.flowCopy}。</p>
+    <div class="year-grid">
+      <article class="year-card year-card--surface"><small>表のテーマ</small><b>${fortune.surface.keyword}</b><p>${fortune.surface.text}</p></article>
+      <article class="year-card year-card--inner"><small>裏のテーマ</small><b>${fortune.inner.keyword}</b><p>${fortune.inner.text}</p></article>
+    </div>
+    ${yearMonths(fortune)}
+    <div class="year-keys"><p><span>勝負の月</span><b>${fortune.peakMonths.join("・")}月</b></p><p><span>ひと休みの月</span><b>${fortune.restMonths.join("・")}月</b></p></div>
+    <div class="year-advice"><p><span>開運アクション</span>${fortune.action}</p>${fortune.caution ? `<p><span>気をつけること</span>${fortune.caution}</p>` : ""}</div>`;
+}
+
+function yearActions(fortune) {
+  return `<div class="year-actions"><button class="cta" data-action="share-year">${fortune.year}年の運勢を共有 <span>↗</span></button><button data-action="download-year">画像を保存</button><button data-action="share-year-x" aria-label="Xで共有">𝕏</button></div>`;
+}
+
+function yearSection(result) {
+  let fortune;
+  try { fortune = calculateYearFortune(result.profile, { surface:result.surface, inner:result.inner }); } catch { return ""; }
+  state.yearFortune = fortune;
+  return `<section class="result-section year-section" id="year-fortune"><div class="result-section__title"><span>✷</span><div><small>${fortune.year} FORTUNE</small><h2>${fortune.year}年 表と裏の運勢</h2></div></div>
+    ${yearCore(fortune)}${yearActions(fortune)}${offerCards("year", fortune)}
+  </section>`;
+}
+
+function yearTeaser() {
+  return `<section class="result-section year-section year-section--teaser" id="year-fortune"><div class="result-section__title"><span>✷</span><div><small>${FORTUNE_YEAR} FORTUNE</small><h2>あなたの${FORTUNE_YEAR}年は？</h2></div></div><p class="year-lead">生年月日を入れるだけで、${FORTUNE_YEAR}年の「表のテーマ」「裏のテーマ」と勝負の月がわかります。無料・登録不要です。</p><a class="cta" href="${FORTUNE_YEAR}/" data-action="year">${FORTUNE_YEAR}年の運勢を見る →</a></section>`;
+}
+
+function offerCards(context, fortune) {
+  const cards = [];
+  const yearReport = context === "year" && fortune ? yearReportUrlFor(fortune.personalYear) : "";
+  const forKeyword = yearReport && yearReportByNumber[String(fortune.personalYear)] ? `表が「${escapeHtml(fortune.surface.keyword)}」の人へ。` : "";
+  if (yearReport) cards.push(`<aside class="offer-card"><span class="offer-card__badge">有料</span><div><h3>${FORTUNE_YEAR}年 表と裏の運勢 完全版</h3><p>${forKeyword}12ヶ月の恋愛・仕事・お金、勝負の月と休む月の使い方、本命星別の裏のテーマを読み物にしました。</p><small>診断はこれからも無料です。完全版は任意の有料コンテンツで、内容と料金はリンク先で確認できます。未成年の方は、保護者の方の同意を得てからご購入ください。</small></div><a class="cta cta--small" href="${escapeHtml(yearReport)}" target="_blank" rel="noopener" data-offer="year_report">完全版を読む ↗</a></aside>`);
+  if (offerUrls.plus) cards.push(`<aside class="offer-card offer-card--plus"><span class="offer-card__badge">月額</span><div><h3>URASELA PLUS</h3><p>毎月の「表と裏の運勢」と、相性の読み物が届く会員プラン。</p><small>料金・解約方法はリンク先に記載しています。未成年の方は、保護者の方の同意を得てからご購入ください。</small></div><a class="cta cta--small" href="${escapeHtml(offerUrls.plus)}" target="_blank" rel="noopener" data-offer="plus">PLUSを見る ↗</a></aside>`);
+  return cards.length ? `<div class="offer-list">${cards.join("")}</div>` : "";
+}
+
+function affiliateCard() {
+  const affiliate = monetization.affiliate || {};
+  if (!offerUrls.affiliate || !affiliate.title) return "";
+  return `<aside class="affiliate-card"><span class="affiliate-card__badge">PR</span><div><h3>${escapeHtml(affiliate.title)}</h3>${affiliate.text ? `<p>${escapeHtml(affiliate.text)}</p>` : ""}</div><a href="${escapeHtml(offerUrls.affiliate)}" target="_blank" rel="sponsored noopener" data-offer="affiliate">詳しく見る ↗</a></aside>`;
+}
+
+function lastSavedResult() {
+  try { return JSON.parse(localStorage.getItem("urasela:lastResult")) || null; } catch { return null; }
+}
+
+function renderYearPage() {
+  state.screen = "year";
+  setPageMeta({
+    title: `${FORTUNE_YEAR}年の運勢｜表と裏で読む無料占い｜URASELA（ウラセラ）`,
+    description: `生年月日を入れるだけで、${FORTUNE_YEAR}年の表のテーマ・裏のテーマ・月ごとのリズム・勝負の月がわかる無料占い。数秘術と九星気学で読み、診断済みなら表キャラ×裏キャラも掛け合わせます。`,
+    path: `${FORTUNE_YEAR}`
+  });
+  const last = lastSavedResult();
+  const birthdate = state.yearBirthdate || last?.profile?.birthdate || "";
+  let fortune = null;
+  if (birthdate) {
+    const characters = last?.profile?.birthdate === birthdate && last.surface && last.inner ? { surface:last.surface, inner:last.inner } : {};
+    try { fortune = calculateYearFortune({ birthdate }, characters); } catch { fortune = null; }
+  }
+  state.yearFortune = fortune;
+  const resultBlock = fortune ? `<div class="result-body year-body">
+      <section class="result-section year-section" id="year-fortune"><div class="result-section__title"><span>✷</span><div><small>${fortune.personalized ? "WITH YOUR URASELA" : "BY BIRTHDATE"}</small><h2>あなたの${FORTUNE_YEAR}年</h2></div></div>${yearCore(fortune)}${yearActions(fortune)}${offerCards("year", fortune)}</section>
+      ${fortune.personalized ? "" : `<section class="result-next"><h2>表キャラ×裏キャラも重ねて読む</h2><p>約3分の無料診断で、あなたの表と裏のキャラクターを${FORTUNE_YEAR}年の運勢に掛け合わせます。</p><button class="cta" data-action="start">無料で診断する →</button></section>`}
+    </div>` : `<div class="result-body year-body"><section class="result-section year-explain"><div class="result-section__title"><span>?</span><div><small>HOW IT WORKS</small><h2>${FORTUNE_YEAR}年の運勢の読み方</h2></div></div><div class="life-grid"><article><span>表</span><h3>表のテーマ</h3><p>数秘術の個人年数から、外に見せる行動のテーマを読みます。</p></article><article><span>裏</span><h3>裏のテーマ</h3><p>九星気学の${FORTUNE_YEAR}年の年盤（九紫火星が中心）で、あなたの本命星が入る場所から心の奥の流れを読みます。</p></article><article><span>月</span><h3>月ごとのリズム</h3><p>1年を「攻め・追い風・整える・休む」の4つで色分けし、勝負の月を出します。</p></article></div></section></div>`;
+  const content = `<section class="year-hero"><div class="year-hero__glow" aria-hidden="true"></div><p class="section-kicker">${FORTUNE_YEAR} FORTUNE</p><h1>${FORTUNE_YEAR}年の<br><strong>表と裏</strong>の運勢</h1><p class="year-hero__lead">九紫火星が中心にめぐる${FORTUNE_YEAR}年。あなたの表のテーマ、裏のテーマ、そして勝負の月を読みます。</p>
+      <form id="year-form" class="year-form"><label><span>生年月日</span><input type="date" name="birthdate" required min="1900-01-01" max="${today}" value="${escapeHtml(birthdate)}"></label><button class="cta" type="submit">${FORTUNE_YEAR}年の運勢を見る <span>→</span></button><small>無料・登録不要。生年月日はこの端末の中だけで計算し、送信しません。</small></form>
+    </section>${resultBlock}${footer()}`;
+  app.innerHTML = shell(content);
+  afterRender("year");
 }
 
 function renderResult() {
@@ -422,8 +526,8 @@ function renderResult() {
   });
   const tarotBlock = shared && result.tarotSelections?.length === 3 ? `<section class="result-section shared-tarot"><div class="result-section__title"><span>◇</span><div><small>TAROT</small><h2>共有された3枚</h2></div></div><div class="result-tarot">${result.tarotSelections.map((card,index)=>`<div>${tarotArt(card)}<small>${["過去","現在","近未来"][index]}</small><b>${card.name}</b><p>${card.meaning}</p></div>`).join("")}</div></section>` : "";
   const content=`<section class="result-hero"><div class="result-hero__stars"></div><p class="section-kicker">YOUR URASELA</p><h1>${shared ? "共有されたウラセラ" : "あなたのウラセラ"}</h1><div class="result-code"><span>TYPE ${code.replace("×"," × TYPE ")}</span><b>${result.combination.relation.label}</b></div>${resultPair(result)}<div class="combination-name"><small>2人の組み合わせ名</small><h2>${result.combination.title}</h2><p>${result.combination.identity}</p></div>${resultActions(result)}</section>
-    <div class="result-body">${shared ? "" : crossSection(result)}${shared ? tarotBlock : fortuneSection(result)}${combinationSections(result)}${adSlot("resultMiddle")}
-      <section class="result-next"><h2>2人の相性も、表と裏でわかる。</h2><p>恋愛・友達・仕事の3つから、惹かれる理由とズレる理由を解析します。</p><button class="cta" data-action="compatibility">相性チェックへ →</button></section>
+    <div class="result-body">${resultJumpNav(shared)}${shared ? yearTeaser() : yearSection(result)}${shared ? "" : crossSection(result)}${shared ? tarotBlock : fortuneSection(result)}${combinationSections(result)}${affiliateCard()}${adSlot("resultMiddle")}
+      <section class="result-next" id="compat-next"><h2>2人の相性も、表と裏でわかる。</h2><p>恋愛・友達・仕事の3つから、惹かれる理由とズレる理由を解析します。</p><button class="cta" data-action="compatibility">相性チェックへ →</button></section>
       <div class="result-bottom-actions">${shared ? `<button class="cta" data-action="start">自分も無料で診断する →</button>` : `<button data-action="reset">もう一度診断する</button>`}<button data-action="characters">16キャラを見る</button></div>
     </div>${footer()}`;
   app.innerHTML=shell(content,{hideNav:false});
@@ -521,6 +625,41 @@ async function createResultCardBlob(result=state.result) {
   return new Promise(resolve=>canvas.toBlob(resolve,"image/png",.95));
 }
 
+async function createYearCardBlob(fortune=state.yearFortune) {
+  const canvas=document.createElement("canvas"); canvas.width=1080; canvas.height=1350;
+  const ctx=canvas.getContext("2d");
+  const gradient=ctx.createLinearGradient(0,0,1080,1350); gradient.addColorStop(0,"#0b0d2a");gradient.addColorStop(.55,"#3a1660");gradient.addColorStop(1,"#0a2147");ctx.fillStyle=gradient;ctx.fillRect(0,0,1080,1350);
+  for(let i=0;i<110;i++){const x=(i*211)%1080,y=(i*353)%1350,r=i%13===0?3:1;ctx.fillStyle=i%5===0?"#f2d39e":"rgba(255,255,255,.6)";ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();}
+  ctx.textAlign="center";
+  ctx.fillStyle="#f2d39e";ctx.font="30px Georgia, serif";ctx.fillText(`${fortune.year} FORTUNE`,540,96);
+  ctx.fillStyle="#fff";ctx.font="bold 64px sans-serif";ctx.fillText(`私の${fortune.year}年`,540,184);
+  ctx.fillStyle="#c9c2f8";ctx.font="26px sans-serif";ctx.fillText(`${fortune.annualStar}の年 ・ ${fortune.flowLabel}`,540,236);
+  const box=(x,label,keyword,color)=>{ctx.save();ctx.beginPath();roundedRectPath(ctx,x,290,440,250,36);ctx.fillStyle="rgba(255,255,255,.08)";ctx.fill();ctx.strokeStyle=color;ctx.lineWidth=3;ctx.stroke();ctx.restore();ctx.fillStyle=color;ctx.font="28px sans-serif";ctx.fillText(label,x+220,352);ctx.fillStyle="#fff";ctx.font="bold 72px sans-serif";ctx.fillText(keyword,x+220,460);};
+  box(80,"表のテーマ",fortune.surface.keyword,"#f2d39e");box(560,"裏のテーマ",fortune.inner.keyword,"#b9b6ff");
+  ctx.fillStyle="#fff";ctx.font="48px Georgia, serif";ctx.fillText("×",540,440);
+  const colors={peak:"#f2d39e",up:"#c7b8ff",steady:"#7fb6e6",rest:"#6d6f8c"};
+  fortune.months.forEach((item,index)=>{const col=index%6,row=Math.floor(index/6),x=80+col*155,y=610+row*170;ctx.save();ctx.beginPath();roundedRectPath(ctx,x,y,140,150,22);ctx.fillStyle=colors[LEVEL_CLASS[item.level]];ctx.globalAlpha=item.level==="休む"?.55:.95;ctx.fill();ctx.restore();ctx.fillStyle="#16113a";ctx.font="bold 30px sans-serif";ctx.fillText(`${item.month}月`,x+70,y+58);ctx.font="bold 34px sans-serif";ctx.fillText(item.level,x+70,y+112);});
+  ctx.fillStyle="#fff";ctx.font="bold 40px sans-serif";ctx.fillText(`勝負の月 ${fortune.peakMonths.join("・")}月`,540,1020);
+  ctx.fillStyle="#d8d7e8";ctx.font="28px sans-serif";ctx.fillText(`ひと休みの月 ${fortune.restMonths.join("・")}月`,540,1072);
+  ctx.fillStyle="#d8d7e8";ctx.font="26px sans-serif";wrapCanvasText(ctx,fortune.action,540,1140,880,40);
+  ctx.fillStyle="#c9c2f8";ctx.font="24px sans-serif";ctx.fillText(`#${fortune.year}年の裏運勢  #URASELA  #ウラセラ`,540,1262);
+  ctx.fillStyle="#9fa5d8";ctx.font="22px sans-serif";ctx.fillText(`${siteUrl.replace(/^https?:\/\//,"")}/${fortune.year}/`,540,1306);
+  return new Promise(resolve=>canvas.toBlob(resolve,"image/png",.95));
+}
+
+async function shareYear() {
+  const fortune=state.yearFortune;if(!fortune)return;
+  const url=`${siteUrl}/${fortune.year}/`,text=fortune.shareCopy;
+  try {
+    const blob=await createYearCardBlob(fortune);const file=new File([blob],`URASELA-${fortune.year}.png`,{type:"image/png"});
+    if(navigator.share&&navigator.canShare?.({files:[file]})){await navigator.share({title:`私の${fortune.year}年`,text,url,files:[file]});trackEvent("share",{method:"web_share_file",content_type:"year_fortune"});return;}
+    if(navigator.share){await navigator.share({title:`私の${fortune.year}年`,text,url});trackEvent("share",{method:"web_share",content_type:"year_fortune"});return;}
+    await navigator.clipboard.writeText(`${text}\n${url}`);showToast("運勢とURLをコピーしました");trackEvent("share",{method:"clipboard",content_type:"year_fortune"});
+  } catch(error){if(error.name!=="AbortError")showToast("共有できませんでした。もう一度お試しください");}
+}
+
+async function downloadYearCard(){const fortune=state.yearFortune;if(!fortune)return;const blob=await createYearCardBlob(fortune);const link=document.createElement("a");link.href=URL.createObjectURL(blob);link.download=`URASELA-${fortune.year}.png`;link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000);showToast("運勢カードを保存しました");trackEvent("file_download",{file_name:link.download,content_type:"year_fortune"});}
+
 function wrapCanvasText(ctx,text,x,y,maxWidth,lineHeight){const chars=[...text];let line="";for(const char of chars){const test=line+char;if(ctx.measureText(test).width>maxWidth&&line){ctx.fillText(line,x,y);line=char;y+=lineHeight;}else line=test;}if(line)ctx.fillText(line,x,y);}
 
 async function shareResult() {
@@ -550,6 +689,14 @@ app.addEventListener("click", async event => {
   }
   else if(action==="compatibility"){updateRoute("compatibility/");renderCompatibility();}
   else if(action==="scroll")scrollHomeTarget(button.dataset.target);
+  else if(action==="year"){updateRoute(`${FORTUNE_YEAR}/`);renderYearPage();window.scrollTo({top:0,behavior:"auto"});}
+  else if(action==="jump"){document.getElementById(button.dataset.target)?.scrollIntoView({behavior:"smooth",block:"start"});}
+  else if(action==="share-year")await shareYear();
+  else if(action==="download-year")await downloadYearCard();
+  else if(action==="share-year-x"&&state.yearFortune){
+    trackEvent("share",{method:"x",content_type:"year_fortune"});
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(state.yearFortune.shareCopy)}&url=${encodeURIComponent(`${siteUrl}/${state.yearFortune.year}/`)}`,"_blank","noopener,noreferrer");
+  }
   else if(action==="answer"){
     const selected=Number(button.dataset.index);state.answers[state.questionIndex]=selected;const answered=state.questionIndex+1;
     if([6,12,18].includes(answered))renderAnalysis(answered/24*100);else if(answered===24){trackEvent("questions_complete");renderAnalysis(100);}else{state.questionIndex+=1;renderQuestion();}
@@ -593,6 +740,11 @@ app.addEventListener("click", async event => {
   }
 });
 
+app.addEventListener("click", event => {
+  const offer=event.target.closest("[data-offer]");
+  if(offer)trackEvent("offer_click",{offer:offer.dataset.offer,source_screen:state.screen});
+});
+
 app.addEventListener("change", event => {
   if(event.target.name==="birthTimeKnown"){qs(".time-field")?.classList.toggle("is-hidden",event.target.value!=="yes");}
   if(event.target.name==="birthplace"){
@@ -610,6 +762,14 @@ app.addEventListener("submit", event => {
     if(data.get("birthplace")==="海外"&&!String(data.get("country")||"").trim()){showToast("国・地域を入力してください");return;}
     state.profile={birthdate:String(data.get("birthdate")),gender:String(data.get("gender")||"回答しない"),birthplace:String(data.get("birthplace")),city:String(data.get("city")||"").trim(),country:String(data.get("country")||"").trim(),birthTimeKnown:known,birthtime:known?String(data.get("birthtime")):""};
     state.questionIndex=0;trackEvent("questions_start");renderQuestion();
+  }
+  if(event.target.id==="year-form"){
+    const birthdate=String(new FormData(event.target).get("birthdate")||"");
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(birthdate)){showToast("生年月日を入力してください");return;}
+    state.yearBirthdate=birthdate;renderYearPage();
+    trackEvent("year_fortune_view",{personalized:Boolean(state.yearFortune?.personalized)});
+    requestAnimationFrame(()=>qs("#year-fortune")?.scrollIntoView({behavior:"smooth",block:"start"}));
+    return;
   }
   if(event.target.id==="compatibility-form"){
     const data=new FormData(event.target);state.compatibilityForm={mode:String(data.get("mode")),selfSurface:Number(data.get("selfSurface")),selfInner:Number(data.get("selfInner")),partnerSurface:Number(data.get("partnerSurface")),partnerInner:Number(data.get("partnerInner"))};
@@ -634,6 +794,7 @@ function renderRoute() {
     renderCharacters();return;
   }
   if(parts.at(-1)==="compatibility"){renderCompatibility();return;}
+  if(parts.at(-1)===String(FORTUNE_YEAR)){renderYearPage();return;}
   renderHome();
 }
 

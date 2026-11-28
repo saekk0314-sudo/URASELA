@@ -1,4 +1,4 @@
-const CACHE = "urasela-growth-v1";
+const CACHE = "urasela-renewal-2027-v1";
 const CORE = [
   "./", "./index.html", "./config.js", "./src/styles.css", "./src/data.js", "./src/engine.js", "./src/analytics.js", "./src/ads.js", "./src/app.js", "./manifest.webmanifest",
   "./assets/icon.svg", "./assets/icon-192.png", "./assets/icon-512.png", "./assets/apple-touch-icon.png", "./assets/generated/hero-urasela.webp", "./assets/generated/characters-sheet.webp"
